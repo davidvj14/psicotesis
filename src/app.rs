@@ -1,7 +1,9 @@
 use crate::error_template::{AppError, ErrorTemplate};
+use crate::questions_components::Questions;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
+use std::time::Duration;
 
 #[cfg(feature = "ssr")]
 pub mod ssr {
@@ -13,6 +15,78 @@ pub mod ssr {
         dotenv().ok();
         let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         Ok(PgConnection::connect(&db_url).await?)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Stage {
+    Questions,
+    Barrat,
+    CardSorting,
+    CardGame,
+    CardGameQs,
+    Thanks,
+}
+
+#[component]
+fn Tests() -> impl IntoView {
+    //let (stage, stage_setter) = create_signal(Stage::Questions); :(
+    let questions = create_rw_signal(true);
+    let barrat = create_rw_signal(false);
+    let card_sorting = create_rw_signal(false);
+    let card_game = create_rw_signal(false);
+    let card_gameqs = create_rw_signal(false);
+    let thanks = create_rw_signal(false);
+
+    view! {
+        <AnimatedShow
+            when=questions
+            show_class = "fade-in-1000"
+            hide_class = "fade-out-1000"
+            hide_delay = Duration::from_millis(1000)
+        >
+            <Questions questions_signal=questions barrat_signal=barrat/>
+        </AnimatedShow>
+        <AnimatedShow
+            when=barrat
+            show_class = "fade-in-1000"
+            hide_class = "fade-out-1000"
+            hide_delay = Duration::from_millis(1000)
+        >
+            <crate::barrat_components::Barrat barrat_signal=barrat card_sorting_signal=card_sorting/>
+        </AnimatedShow>
+        <AnimatedShow
+            when=card_sorting
+            show_class = "fade-in-1000"
+            hide_class = "fade-out-1000"
+            hide_delay = Duration::from_millis(1000)
+        >
+            <crate::questions_components::Questions questions_signal=questions barrat_signal=barrat/>
+        </AnimatedShow>
+        <AnimatedShow
+            when=card_game
+            show_class = "fade-in-1000"
+            hide_class = "fade-out-1000"
+            hide_delay = Duration::from_millis(1000)
+        >
+            <crate::questions_components::Questions questions_signal=questions barrat_signal=barrat/>
+        </AnimatedShow>
+        <AnimatedShow
+            when=card_gameqs
+            show_class = "fade-in-1000"
+            hide_class = "fade-out-1000"
+            hide_delay = Duration::from_millis(1000)
+        >
+            <crate::questions_components::Questions questions_signal=questions barrat_signal=barrat/>
+        </AnimatedShow>
+        <AnimatedShow
+            when=thanks
+            show_class = "fade-in-1000"
+            hide_class = "fade-out-1000"
+            hide_delay = Duration::from_millis(1000)
+        >
+            <crate::questions_components::Questions questions_signal=questions barrat_signal=barrat/>
+        </AnimatedShow>
     }
 }
 
@@ -42,7 +116,7 @@ pub fn App() -> impl IntoView {
         }>
             <main>
                 <Routes>
-                    <Route path="" view=crate::questions_components::Questions/>
+                    <Route path="" view=Tests/>
                 </Routes>
             </main>
         </Router>

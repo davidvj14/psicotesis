@@ -239,7 +239,7 @@ fn LossQ() -> impl IntoView {
 }
 
 #[component]
-pub fn Questions() -> impl IntoView {
+pub fn Questions(questions_signal: RwSignal<bool>, barrat_signal: RwSignal<bool>) -> impl IntoView {
     provide_meta_context();
     let pqs = create_server_action::<crate::questions::ProcessQuestions>();
 
@@ -248,7 +248,7 @@ pub fn Questions() -> impl IntoView {
         <div class="container">
             <h1>Evaluación neuropsicológica</h1>
             <h3>Hola, muchas gracias por tomarte el tiempo para participar, por favor contesta con sinceridad, se te asignará un número de participante por lo que tus respuestas serán anónimas.</h3>
-            <ActionForm action=pqs>
+            <ActionForm action=pqs on:submit=move |_| {questions_signal.set(false); barrat_signal.set(true)}>
                 <AgeQ/>
                 <SexQ/>
                 <MajorQ/>

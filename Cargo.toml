@@ -24,7 +24,9 @@ dotenvy = { version = "0.15.7", optional = true }
 serde = { version = "1.0.203", features = ["derive"] }
 sqlx = { version = "0.7.4", features = ["postgres", "runtime-tokio"], optional = true }
 lazy_static = { version = "1.4.0", optional = true}
-cookie = { version = "0.18.1", optional = true }
+cookie = { version = "0.18.1" }
+axum-extra = { version = "0.9.3", features = ["cookie"], optional = true }
+headers = "0.4.0"
 
 [features]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
@@ -41,7 +43,8 @@ ssr = [
     "dep:dotenvy",
     "dep:sqlx",
     "dep:lazy_static",
-    "dep:cookie"
+    #"dep:cookie",
+    "dep:axum-extra"
 ]
 
 # Defines a size-optimized profile for the WASM bundle in release mode

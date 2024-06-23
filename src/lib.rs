@@ -1,4 +1,8 @@
 pub mod app;
+pub mod barrat;
+pub mod barrat_components;
+pub mod card_sorting;
+pub mod card_sorting_components;
 pub mod error_template;
 #[cfg(feature = "ssr")]
 pub mod fileserv;
