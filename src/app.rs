@@ -1,3 +1,4 @@
+use crate::card_sorting_components::CardSorting;
 use crate::error_template::{AppError, ErrorTemplate};
 use crate::questions_components::Questions;
 use leptos::*;
@@ -61,7 +62,7 @@ fn Tests() -> impl IntoView {
             hide_class = "fade-out-1000"
             hide_delay = Duration::from_millis(1000)
         >
-            <crate::questions_components::Questions questions_signal=questions barrat_signal=barrat/>
+            <CardSorting/>
         </AnimatedShow>
         <AnimatedShow
             when=card_game

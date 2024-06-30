@@ -1,0 +1,64 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+.container {
+    text-align: center;
+}
+
+#instructions {
+    margin-bottom: 20px;
+}
+
+#message {
+    font-size: 24px;
+    color: red;
+    display: none;
+}
+
+.hidden {
+    display: none;
+}
+
+#card-area {
+    display: flex;
+    justify-content: center;
+    margin: 20px;
+}
+
+.sorting-area {
+    width: 100px;
+    height: 150px;
+    margin: 10px;
+    background-color: #e0e0e0;
+    border: 2px dashed #aaa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    width: 100px;
+    height: 150px;
+    background-color: white;
+    border: 2px solid #ccc;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+#deck-card {
+    cursor: grab;
+}
+
