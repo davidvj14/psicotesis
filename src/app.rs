@@ -118,6 +118,7 @@ pub fn App() -> impl IntoView {
             <main>
                 <Routes>
                     <Route path="" view=Tests/>
+                    <Route path="cards" view=CardSorting/>
                 </Routes>
             </main>
         </Router>
