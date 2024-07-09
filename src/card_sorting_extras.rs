@@ -1,6 +1,7 @@
 #![allow(unused)]
 use leptos::*;
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum CardShape {
@@ -42,16 +43,25 @@ pub struct Card {
 }
 
 impl Card {
-    pub fn compare(&self, card: Card) -> Option<Criterion> {
+    pub fn compare_for_error(&self, card: Card) -> CardError {
+        let mut matches = Vec::new();
+
         if self.number == card.number {
-            return Some(Criterion::Number)
-        } else if self.color == card.color {
-            return Some(Criterion::Color)
-        } else if self.shape == card.shape {
-            return Some(Criterion::Shape)
+            matches.push(Criterion::Number);
         }
-        
-        None
+        if self.color == card.color {
+            matches.push(Criterion::Color);
+        }
+        if self.shape == card.shape {
+            matches.push(Criterion::Shape);
+        }
+
+        match matches.len() {
+            0 => CardError::Other,
+            1 => CardError::One(matches[0]),
+            2 => CardError::Two(matches[0], matches[1]),
+            _ => unreachable!("Error in compare_for_error"),
+        }
     }
 }
 
@@ -62,26 +72,100 @@ struct TestResult {
     perseverations: u64,
     deferred_p: u64,
     ttf: i64,
-    tae: f64,
+    tae: i64,
     time: i64,
 }
 
 impl TestResult {
-    pub fn new(score: u64) -> Self {
+    pub fn new() -> Self {
         Self {
-            score,
+            score: 0,
             errors: 0,
             m_errors: 0,
             perseverations: 0,
             deferred_p: 0,
             ttf: 0,
-            tae: 0.0,
+            tae: 0,
             time: 0,
         }
     }
 
+    fn enqueue(queue: &mut VecDeque<Answer>, elem: Answer) {
+        let _ = queue.pop_front();
+        queue.push_back(elem);
+    }
+
+    fn check_for_deferred(last3: &VecDeque<Answer>, grade: &Grade) -> bool {
+        if let Some(g) = last3.get(0) {
+            if g.grade == *grade {
+                return true;
+            }
+        }
+        if let Some(g) = last3.get(1) {
+            if g.grade == *grade {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn check_for_perseveration(last3: &VecDeque<Answer>, grade: &Grade) -> bool {
+        match last3.back() {
+            None => false,
+            Some(g) => g.grade == *grade,
+        }
+    }
+
+    fn check_for_merror(last3: &VecDeque<Answer>, grade: &Grade) -> bool {
+        if let Some(Grade::Correct) = last3.get(0).and_then(|x| Some(x.grade.clone())) {
+            if let Some(Grade::Correct) = last3.get(1).and_then(|x| Some(x.grade.clone())) {
+                if let Some(Grade::Correct) = last3.get(2).and_then(|x| Some(x.grade.clone())) {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    fn eval_step(&mut self, last3: &VecDeque<Answer>, answer: &Answer) {
+        self.time += answer.time_taken;
+        if let Some(Grade::Incorrect(_, _)) = last3.back().and_then(|x| Some(x.grade.clone())) {
+            self.tae += answer.time_taken;
+        }
+        match answer.grade {
+            Grade::Correct => self.score += 1,
+            Grade::Incorrect(_, _) => {
+                if Self::check_for_deferred(last3, &answer.grade) {
+                    self.deferred_p += 1;
+                } else if Self::check_for_perseveration(last3, &answer.grade) {
+                    self.perseverations += 1;
+                } else if Self::check_for_merror(last3, &answer.grade) {
+                    self.m_errors += 1;
+                } else {
+                    self.errors += 1;
+                }
+            }
+        }
+    }
+
+    pub fn eval(answers: &Vec<Answer>) -> Self {
+        let mut result = Self::new();
+        let mut previous_err: Option<CardError> = None;
+        let mut last3: VecDeque<Answer> = VecDeque::with_capacity(3);
+        let ttf = answers[0].time_taken;
+        let mut total_time = 0;
+        let mut tae = 0;
+
+        for answer in answers {
+            result.eval_step(&last3, answer);
+            Self::enqueue(&mut last3, answer.clone());
+        }
+
+        result
+    }
+
     pub fn calc_perseverations(&mut self, answers: &Vec<Answer>) {
-        let mut last_error = None;
+        let mut last_error = CardError::Other;
         let mut perseverations = 0;
         for answer in answers {
             if let Grade::Incorrect(_, c) = answer.grade {
@@ -100,11 +184,17 @@ impl TestResult {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum CardError {
+    Other,
+    One(Criterion),
+    Two(Criterion, Criterion),
+}
+
 #[derive(PartialEq, Clone, Debug)]
 pub enum Grade {
-    First,
     Correct,
-    Incorrect(Criterion, Option<Criterion>),
+    Incorrect(Criterion, CardError),
 }
 
 #[derive(Clone, Debug)]
@@ -139,28 +229,46 @@ pub fn eval_answer(
                 score.set(score.get() + 1);
                 answers.push(Answer::new(Grade::Correct, time));
             } else {
-                answers.push(Answer::new(Grade::Incorrect(Criterion::Shape, CRITERION_CARDS[id].compare(card)), time));
+                answers.push(Answer::new(
+                    Grade::Incorrect(
+                        Criterion::Shape,
+                        CRITERION_CARDS[id].compare_for_error(card),
+                    ),
+                    time,
+                ));
                 return (answers, false);
             }
-        },
+        }
         Criterion::Color => {
             if card.color == CRITERION_CARDS[id].color {
                 score.set(score.get() + 1);
                 answers.push(Answer::new(Grade::Correct, time));
             } else {
-                answers.push(Answer::new(Grade::Incorrect(Criterion::Color, CRITERION_CARDS[id].compare(card)), time));
+                answers.push(Answer::new(
+                    Grade::Incorrect(
+                        Criterion::Color,
+                        CRITERION_CARDS[id].compare_for_error(card),
+                    ),
+                    time,
+                ));
                 return (answers, false);
             }
-        },
+        }
         Criterion::Number => {
             if card.number == CRITERION_CARDS[id].number {
                 score.set(score.get() + 1);
                 answers.push(Answer::new(Grade::Correct, time));
             } else {
-                answers.push(Answer::new(Grade::Incorrect(Criterion::Number, CRITERION_CARDS[id].compare(card)), time));
+                answers.push(Answer::new(
+                    Grade::Incorrect(
+                        Criterion::Number,
+                        CRITERION_CARDS[id].compare_for_error(card),
+                    ),
+                    time,
+                ));
                 return (answers, false);
             }
-        },
+        }
     }
     (answers, true)
 }
