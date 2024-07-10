@@ -1,7 +1,7 @@
 #![allow(unused)]
 use leptos::*;
 use serde::{Deserialize, Serialize};
-use std::collections::VecDeque;
+use std::{collections::VecDeque, fmt::Display};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum CardShape {
@@ -65,15 +65,38 @@ impl Card {
     }
 }
 
-struct TestResult {
-    score: u64,
-    errors: u64,
-    m_errors: u64,
-    perseverations: u64,
-    deferred_p: u64,
-    ttf: i64,
-    tae: i64,
-    time: i64,
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct TestResult {
+    pub score: i64,
+    pub errors: i64,
+    pub m_errors: i64,
+    pub perseverations: i64,
+    pub deferred_p: i64,
+    pub ttf: i64,
+    pub tae: i64,
+    pub time: i64,
+}
+
+impl Display for TestResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f,
+            "Aciertos: {}\n\
+            Errores: {}\n\
+            Errores de mantenimiento: {}\n\
+            Perseveraciones: {}\n\
+            Perseveraciones diferidas: {}\n\
+            Tiempo para primer movimiento: {}ms\n\
+            Tiempo tras error (total): {}ms\n\
+            Tiempo total: {}ms\n",
+            self.score,
+            self.errors,
+            self.m_errors,
+            self.perseverations,
+            self.deferred_p,
+            self.ttf,
+            self.tae,
+            self.time)
+    }
 }
 
 impl TestResult {
@@ -152,6 +175,7 @@ impl TestResult {
         let mut result = Self::new();
         let mut previous_err: Option<CardError> = None;
         let mut last3: VecDeque<Answer> = VecDeque::with_capacity(3);
+        logging::log!("{:?}", answers[0].time_taken);
         let ttf = answers[0].time_taken;
         let mut total_time = 0;
         let mut tae = 0;

@@ -4,6 +4,7 @@ use chrono::{prelude::*, TimeDelta};
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
+use crate::card_sorting_extras::TestResult;
 
 #[derive(Clone)]
 struct State {
@@ -13,6 +14,14 @@ struct State {
     answers: RwSignal<Vec<Answer>>,
     current_criterion: RwSignal<Criterion>,
     current_index: RwSignal<usize>,
+    status: RwSignal<GameStatus>
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum GameStatus {
+    InProgress,
+    Done,
+    TimeOver,
 }
 
 impl State {
@@ -24,6 +33,7 @@ impl State {
             answers: create_rw_signal(Vec::new()),
             current_criterion: create_rw_signal(criterion),
             current_index: create_rw_signal(0),
+            status: create_rw_signal(GameStatus::InProgress),
         }
     }
 }
@@ -32,52 +42,26 @@ impl State {
 pub fn CardSorting() -> impl IntoView {
     let reading_signal = create_rw_signal(true);
     let incorrect_signal = create_rw_signal(false);
-    let times_over = create_rw_signal(false);
     let timer_signal = create_rw_signal(0i64);
     let state = create_rw_signal(State::new(CRITERIA[0]));
+    let done = create_rw_signal(false);
 
     view! {
         <Stylesheet href="card_sorting.css"/>
         <div class="container">
             <Show when=move || reading_signal.get()>
-                <Instructions reading_signal=reading_signal times_over=times_over timer_signal=timer_signal/>
+                <Instructions reading_signal=reading_signal times_over=state.get().status timer_signal=timer_signal/>
             </Show>
-            <Show when=move || times_over.get()>
-                <div>
-                    "Se acabo el tiempo de la prueba"
-                </div>
-            </Show>
-            <Show when=move || !reading_signal.get() && !times_over.get() >
-                <div id="criteria-cards">
-                    <CriterionCard card=CRITERION_CARDS[0].clone()/>
-                    <CriterionCard card=CRITERION_CARDS[1].clone()/>
-                    <CriterionCard card=CRITERION_CARDS[2].clone()/>
-                    <CriterionCard card=CRITERION_CARDS[3].clone()/>
-                </div>
+            <Finished state=state/>
+            <Show when=move || {
+                let status = state.get().status.get();
+                return !reading_signal.get() && (status != GameStatus::Done && status != GameStatus::TimeOver)
+            } >
+                <CriteriaCards/>
                 <br/>
                 <div id="card-area">
                     <Incorrect incorrect_signal=incorrect_signal/>
-                    <SortingArea
-                        a_id = 0
-                        state=state
-                        timer_signal=timer_signal
-                        incorrect_signal=incorrect_signal
-                    /><SortingArea
-                        a_id = 1
-                        state=state
-                        timer_signal=timer_signal
-                        incorrect_signal=incorrect_signal
-                    /><SortingArea
-                        a_id = 2
-                        state=state
-                        timer_signal=timer_signal
-                        incorrect_signal=incorrect_signal
-                    /><SortingArea
-                        a_id = 3
-                        state=state
-                        timer_signal=timer_signal
-                        incorrect_signal=incorrect_signal
-                    />
+                    <SortingAreas state=state incorrect_signal=incorrect_signal timer_signal=timer_signal/>
                 </div>
                 <div id="deck-area">
                     <div class="card" id="deck-card" draggable="true" on:dragstart=move |_| {()}>
@@ -99,11 +83,78 @@ fn Incorrect(incorrect_signal: RwSignal<bool>) -> impl IntoView {
 }
 
 #[component]
+fn Finished(state: RwSignal<State>) -> impl IntoView {
+    let status = move || state.get().status;
+    let s = create_rw_signal(String::from("Has concluido la prueba"));
+    view! {
+        <Show when=move || status().get() == GameStatus::TimeOver || status().get() == GameStatus::Done>
+            <div>
+                <h1>
+                {s.get()}
+                </h1>
+            </div>
+            <button on:click=move |_| {
+                let result = crate::card_sorting_extras::TestResult::eval(&state.get().answers.get());
+                s.set(format!("{}", result));
+                spawn_local(async move {
+                    crate::card_sorting::process_card_sorting(result).await;
+                });
+            }>
+                "Siguiente"
+            </button>
+        </Show>
+    }
+}
+
+#[component]
+fn CriteriaCards() -> impl IntoView {
+    view!{
+        <div id="criteria-cards">
+            <CriterionCard card=CRITERION_CARDS[0].clone()/>
+            <CriterionCard card=CRITERION_CARDS[1].clone()/>
+            <CriterionCard card=CRITERION_CARDS[2].clone()/>
+            <CriterionCard card=CRITERION_CARDS[3].clone()/>
+        </div>
+    }
+}
+
+#[component]
 fn CriterionCard(card: Card) -> impl IntoView {
     view! {
         <div class="sorting-area">
             <img style="overflow: hidden" src=move||card.image/>
         </div>
+    }
+}
+
+#[component]
+fn SortingAreas(state: RwSignal<State>, incorrect_signal: RwSignal<bool>, timer_signal: RwSignal<i64>) -> impl IntoView {
+    view!{
+        <div id="card-area">
+            <Incorrect incorrect_signal=incorrect_signal/>
+            <SortingArea
+                a_id = 0
+                state=state
+                timer_signal=timer_signal
+                incorrect_signal=incorrect_signal
+            /><SortingArea
+                a_id = 1
+                state=state
+                timer_signal=timer_signal
+                incorrect_signal=incorrect_signal
+            /><SortingArea
+                a_id = 2
+                state=state
+                timer_signal=timer_signal
+                incorrect_signal=incorrect_signal
+            /><SortingArea
+                a_id = 3
+                state=state
+                timer_signal=timer_signal
+                incorrect_signal=incorrect_signal
+            />
+        </div>
+
     }
 }
 
@@ -137,8 +188,14 @@ fn SortingArea(
                 state.get().answers.set(answers);
                 area_card.set(Some(state.get().current_card.get()));
                 state.get().current_index.set(state.get().current_index.get() + 1);
+                if state.get().current_index.get() == 64 {
+                    state.get().status.set(GameStatus::Done);
+                }
+                let status = state.get().status.get();
+                if status == GameStatus::Done || status == GameStatus::TimeOver {
+                    return;
+                }
                 state.get().current_card.set(CARDS[state.get().current_index.get()].clone());
-                logging::log!("{}", state.get().score.get());
                 timer_signal.set(Utc::now().timestamp_millis());
             }
         on:dragover=move |event| (event.prevent_default())>
@@ -147,10 +204,6 @@ fn SortingArea(
             </Show>
         </div>
     }
-}
-
-fn eval() {
-
 }
 
 fn show_incorrect(incorrect_signal: RwSignal<bool>) {
@@ -162,7 +215,7 @@ fn show_incorrect(incorrect_signal: RwSignal<bool>) {
 }
 
 #[component]
-fn Instructions(reading_signal: RwSignal<bool>, times_over: RwSignal<bool>, timer_signal: RwSignal<i64>) -> impl IntoView {
+fn Instructions(reading_signal: RwSignal<bool>, times_over: RwSignal<GameStatus>, timer_signal: RwSignal<i64>) -> impl IntoView {
     view! {
         <div id="instructions" class="container">
         "\
@@ -179,7 +232,7 @@ fn Instructions(reading_signal: RwSignal<bool>, times_over: RwSignal<bool>, time
                 reading_signal.set(false);
                 timer_signal.set(Utc::now().timestamp_millis());
                 set_timeout(
-                    move|| times_over.set(true),
+                    move|| times_over.set(GameStatus::TimeOver),
                     std::time::Duration::new(600, 0)
                 );
             }>
