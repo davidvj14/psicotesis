@@ -1,7 +1,3 @@
-# Get started with a build env with Rust nightly
-#FROM rustlang/rust:nightly-bullseye as builder
-
-# If you’re using stable, use this instead
 FROM rust:1.79-bullseye as builder
 
 # Install cargo-binstall, which makes it easier to install other
@@ -32,14 +28,10 @@ RUN apt-get update -y \
   && apt-get clean -y \
   && rm -rf /var/lib/apt/lists/*
 
-# -- NB: update binary name from "psicotesis" to match your app name in Cargo.toml --
-# Copy the server binary to the /app directory
 COPY --from=builder /app/target/release/psicotesis /app/
 
-# /target/site contains our JS/WASM/CSS, etc.
 COPY --from=builder /app/target/site /app/site
 
-# Copy Cargo.toml if it’s needed at runtime
 COPY --from=builder /app/Cargo.toml /app/
 
 # Set any required env variables and
@@ -48,7 +40,6 @@ ENV LEPTOS_SITE_ADDR="0.0.0.0:8080"
 ENV LEPTOS_SITE_ROOT="site"
 EXPOSE 8080
 
-# -- NB: update binary name from "psicotesis" to match your app name in Cargo.toml --
 # Run the server
 CMD ["/app/psicotesis"]
 

@@ -1,4 +1,5 @@
-#![allow(unused)]
+#![allow(unused)
+]
 use leptos::*;
 use serde::{Deserialize, Serialize};
 use std::{collections::VecDeque, fmt::Display};
@@ -114,17 +115,24 @@ impl TestResult {
     }
 
     fn enqueue(queue: &mut VecDeque<Answer>, elem: Answer) {
-        let _ = queue.pop_front();
+        if (queue.len() == 4) {
+            let _ = queue.pop_front();
+        }
         queue.push_back(elem);
     }
 
-    fn check_for_deferred(last3: &VecDeque<Answer>, grade: &Grade) -> bool {
-        if let Some(g) = last3.get(0) {
+    fn check_for_deferred(last4: &VecDeque<Answer>, grade: &Grade) -> bool {
+        if let Some(g) = last4.get(0) {
             if g.grade == *grade {
                 return true;
             }
         }
-        if let Some(g) = last3.get(1) {
+        if let Some(g) = last4.get(1) {
+            if g.grade == *grade {
+                return true;
+            }
+        }
+        if let Some(g) = last4.get(2) {
             if g.grade == *grade {
                 return true;
             }
@@ -132,17 +140,20 @@ impl TestResult {
         false
     }
 
-    fn check_for_perseveration(last3: &VecDeque<Answer>, grade: &Grade) -> bool {
-        match last3.back() {
+    fn check_for_perseveration(last4: &VecDeque<Answer>, grade: &Grade) -> bool {
+        match last4.back() {
             None => false,
-            Some(g) => g.grade == *grade,
+            Some(g) => match g.grade {
+                Grade::Correct => false,
+                Grade::Incorrect(_, _) => g.grade == *grade
+            },
         }
     }
 
-    fn check_for_merror(last3: &VecDeque<Answer>, grade: &Grade) -> bool {
-        if let Some(Grade::Correct) = last3.get(0).and_then(|x| Some(x.grade.clone())) {
-            if let Some(Grade::Correct) = last3.get(1).and_then(|x| Some(x.grade.clone())) {
-                if let Some(Grade::Correct) = last3.get(2).and_then(|x| Some(x.grade.clone())) {
+    fn check_for_merror(last4: &VecDeque<Answer>, grade: &Grade) -> bool {
+        if let Some(Grade::Correct) = last4.get(0).and_then(|x| Some(x.grade.clone())) {
+            if let Some(Grade::Correct) = last4.get(1).and_then(|x| Some(x.grade.clone())) {
+                if let Some(Grade::Correct) = last4.get(2).and_then(|x| Some(x.grade.clone())) {
                     return true;
                 }
             }
@@ -150,19 +161,19 @@ impl TestResult {
         false
     }
 
-    fn eval_step(&mut self, last3: &VecDeque<Answer>, answer: &Answer) {
+    fn eval_step(&mut self, last4: &VecDeque<Answer>, answer: &Answer) {
         self.time += answer.time_taken;
-        if let Some(Grade::Incorrect(_, _)) = last3.back().and_then(|x| Some(x.grade.clone())) {
+        if let Some(Grade::Incorrect(_, _)) = last4.back().and_then(|x| Some(x.grade.clone())) {
             self.tae += answer.time_taken;
         }
         match answer.grade {
             Grade::Correct => self.score += 1,
             Grade::Incorrect(_, _) => {
-                if Self::check_for_deferred(last3, &answer.grade) {
-                    self.deferred_p += 1;
-                } else if Self::check_for_perseveration(last3, &answer.grade) {
+                if Self::check_for_perseveration(last4, &answer.grade) {
                     self.perseverations += 1;
-                } else if Self::check_for_merror(last3, &answer.grade) {
+                } else if Self::check_for_deferred(last4, &answer.grade) {
+                    self.deferred_p += 1;
+                } else if Self::check_for_merror(last4, &answer.grade) {
                     self.m_errors += 1;
                 } else {
                     self.errors += 1;
@@ -174,45 +185,47 @@ impl TestResult {
     pub fn eval(answers: &Vec<Answer>) -> Self {
         let mut result = Self::new();
         let mut previous_err: Option<CardError> = None;
-        let mut last3: VecDeque<Answer> = VecDeque::with_capacity(3);
+        let mut last4: VecDeque<Answer> = VecDeque::with_capacity(4);
         logging::log!("{:?}", answers[0].time_taken);
-        let ttf = answers[0].time_taken;
-        let mut total_time = 0;
-        let mut tae = 0;
+        result.ttf = answers[0].time_taken;
 
         for answer in answers {
-            result.eval_step(&last3, answer);
-            Self::enqueue(&mut last3, answer.clone());
+            logging::log!("{:?}", last4);
+            result.eval_step(&last4, answer);
+            Self::enqueue(&mut last4, answer.clone());
         }
 
         result
     }
 
-    pub fn calc_perseverations(&mut self, answers: &Vec<Answer>) {
-        let mut last_error = CardError::Other;
-        let mut perseverations = 0;
-        for answer in answers {
-            if let Grade::Incorrect(_, c) = answer.grade {
-                if last_error == c {
-                    perseverations += 1;
-                } else {
-                    last_error = c;
-                }
-            }
-        }
-        self.perseverations = perseverations
-    }
-
-    pub fn calc_deferred(&mut self, answers: &Vec<Answer>) {
-        let mut last4 = ();
-    }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug)]
 pub enum CardError {
     Other,
     One(Criterion),
     Two(Criterion, Criterion),
+}
+
+impl PartialEq for CardError {
+    fn eq(&self, other: &Self) -> bool {
+        match self {
+            CardError::Other => match other {
+                CardError::Other => true,
+                _ => false,
+            },
+            CardError::One(c1) => match other {
+                CardError::Other => false,
+                CardError::One(c2) => c1 == c2,
+                CardError::Two(c2, c3) => c1 == c2 || c1 == c3,
+            },
+            CardError::Two(c1, c2) => match other {
+                CardError::Other => false,
+                CardError::One(c3) => c1 == c3 || c2 == c3,
+                CardError::Two(c3, c4) => c1 == c3 || c1 == c4 || c2 == c3 || c2 == c4,
+            }
+        }
+    }
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -220,6 +233,7 @@ pub enum Grade {
     Correct,
     Incorrect(Criterion, CardError),
 }
+
 
 #[derive(Clone, Debug)]
 pub struct Answer {

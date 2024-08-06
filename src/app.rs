@@ -1,6 +1,7 @@
-use crate::card_sorting_components::CardSorting;
+use crate::card_sorting_components::{CardSorting, DirectCardSorting};
 use crate::error_template::{AppError, ErrorTemplate};
 use crate::questions_components::Questions;
+use crate::card_game_components::*;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -62,7 +63,7 @@ fn Tests() -> impl IntoView {
             hide_class = "fade-out-1000"
             hide_delay = Duration::from_millis(1000)
         >
-            <CardSorting/>
+            <CardSorting sorting_signal=card_sorting game_signal=card_game/>
         </AnimatedShow>
         <AnimatedShow
             when=card_game
@@ -70,7 +71,7 @@ fn Tests() -> impl IntoView {
             hide_class = "fade-out-1000"
             hide_delay = Duration::from_millis(1000)
         >
-            <crate::questions_components::Questions questions_signal=questions barrat_signal=barrat/>
+            <CardGame game_signal=card_game gameqs_signal=card_gameqs/>
         </AnimatedShow>
         <AnimatedShow
             when=card_gameqs
@@ -118,7 +119,8 @@ pub fn App() -> impl IntoView {
             <main>
                 <Routes>
                     <Route path="" view=Tests/>
-                    <Route path="cards" view=CardSorting/>
+                    <Route path="cards" view=DirectCardSorting/>
+                    <Route path="game" view=DirectCardGame/>
                 </Routes>
             </main>
         </Router>

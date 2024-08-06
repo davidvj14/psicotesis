@@ -1,14 +1,10 @@
-#![allow(unused)]
 use crate::card_sorting_extras::*;
-use chrono::{prelude::*, TimeDelta};
+use chrono::prelude::*;
 use leptos::*;
 use leptos_meta::*;
-use leptos_router::*;
-use crate::card_sorting_extras::TestResult;
 
 #[derive(Clone)]
 struct State {
-    incorrect: RwSignal<bool>,
     current_card: RwSignal<Card>,
     score: RwSignal<u64>,
     answers: RwSignal<Vec<Answer>>,
@@ -27,7 +23,6 @@ enum GameStatus {
 impl State {
     pub fn new(criterion: Criterion) -> Self {
         Self {
-            incorrect: create_rw_signal(false),
             current_card: create_rw_signal(CARDS[0].clone()),
             score: create_rw_signal(0),
             answers: create_rw_signal(Vec::new()),
@@ -39,12 +34,20 @@ impl State {
 }
 
 #[component]
-pub fn CardSorting() -> impl IntoView {
+pub fn DirectCardSorting() -> impl IntoView {
+    let ss = create_rw_signal(true);
+    let gs = create_rw_signal(false);
+    view! {
+        <CardSorting sorting_signal=ss game_signal=gs/>
+    }
+}
+
+#[component]
+pub fn CardSorting(sorting_signal: RwSignal<bool>, game_signal: RwSignal<bool>) -> impl IntoView {
     let reading_signal = create_rw_signal(true);
     let incorrect_signal = create_rw_signal(false);
     let timer_signal = create_rw_signal(0i64);
     let state = create_rw_signal(State::new(CRITERIA[0]));
-    let done = create_rw_signal(false);
 
     view! {
         <Stylesheet href="card_sorting.css"/>
@@ -52,7 +55,7 @@ pub fn CardSorting() -> impl IntoView {
             <Show when=move || reading_signal.get()>
                 <Instructions reading_signal=reading_signal times_over=state.get().status timer_signal=timer_signal/>
             </Show>
-            <Finished state=state/>
+            <Finished state=state sorting_signal=sorting_signal game_signal=game_signal/>
             <Show when=move || {
                 let status = state.get().status.get();
                 return !reading_signal.get() && (status != GameStatus::Done && status != GameStatus::TimeOver)
@@ -83,7 +86,7 @@ fn Incorrect(incorrect_signal: RwSignal<bool>) -> impl IntoView {
 }
 
 #[component]
-fn Finished(state: RwSignal<State>) -> impl IntoView {
+fn Finished(state: RwSignal<State>, sorting_signal: RwSignal<bool>, game_signal: RwSignal<bool>) -> impl IntoView {
     let status = move || state.get().status;
     let s = create_rw_signal(String::from("Has concluido la prueba"));
     view! {
@@ -97,8 +100,10 @@ fn Finished(state: RwSignal<State>) -> impl IntoView {
                 let result = crate::card_sorting_extras::TestResult::eval(&state.get().answers.get());
                 s.set(format!("{}", result));
                 spawn_local(async move {
-                    crate::card_sorting::process_card_sorting(result).await;
+                    let _ = crate::card_sorting::process_card_sorting(result).await;
                 });
+                sorting_signal.set(false);
+                game_signal.set(true);
             }>
                 "Siguiente"
             </button>
@@ -131,7 +136,6 @@ fn CriterionCard(card: Card) -> impl IntoView {
 fn SortingAreas(state: RwSignal<State>, incorrect_signal: RwSignal<bool>, timer_signal: RwSignal<i64>) -> impl IntoView {
     view!{
         <div id="card-area">
-            <Incorrect incorrect_signal=incorrect_signal/>
             <SortingArea
                 a_id = 0
                 state=state

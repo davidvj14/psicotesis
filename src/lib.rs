@@ -4,6 +4,9 @@ pub mod barrat_components;
 pub mod card_sorting;
 pub mod card_sorting_components;
 pub mod card_sorting_extras;
+pub mod card_game;
+pub mod card_game_components;
+pub mod card_game_extras;
 pub mod error_template;
 #[cfg(feature = "ssr")]
 pub mod fileserv;
