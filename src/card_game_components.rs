@@ -19,6 +19,8 @@ pub fn DirectCardGame() -> impl IntoView {
 pub fn CardGame(game_signal: RwSignal<bool>, gameqs_signal: RwSignal<bool>) -> impl IntoView {
     let reading_signal = create_rw_signal(true);
     let state = create_rw_signal(GameState::new());
+    let values = create_rw_signal(['\0'; 3]);
+    let q_signal = create_rw_signal(false);
     let times_over = create_rw_signal(false);
     let timer_signal = create_rw_signal(0i64);
     let card1_signal = create_rw_signal(false);
@@ -31,7 +33,6 @@ pub fn CardGame(game_signal: RwSignal<bool>, gameqs_signal: RwSignal<bool>) -> i
     let stack3_signal = create_rw_signal(0);
     let stack4_signal = create_rw_signal(0);
     let stack5_signal = create_rw_signal(0);
-//162 max (-90, +72)
     view! {
         <Stylesheet href="card_game.css"/>
         <body>
@@ -90,8 +91,11 @@ pub fn CardGame(game_signal: RwSignal<bool>, gameqs_signal: RwSignal<bool>) -> i
                             index=stack5_signal timer=timer_signal state=state/>
                     </div>
                 </Show>
-                <Show when=move || {times_over.get() || reached_max(state) }>
-                    <label>"Has concluido esta prueba"</label>
+                <Show when=move || {(times_over.get() || reached_max(state)) && !q_signal.get() }>
+                    <EndOfGameText q_signal=q_signal/>
+                </Show>
+                <Show when=move || q_signal.get()>
+                    <Questions values=values/>
                 </Show>
             </div>
         </body>
@@ -147,7 +151,8 @@ fn LowerCard(signal: RwSignal<bool>, n: i64, stack: &'static [Card; 18], index: 
 }
 
 #[component]
-fn Instructions(reading_signal: RwSignal<bool>, times_over: RwSignal<bool>, timer_signal: RwSignal<i64>) -> impl IntoView {
+fn Instructions(reading_signal: RwSignal<bool>, times_over: RwSignal<bool>,
+    timer_signal: RwSignal<i64>) -> impl IntoView {
     view! {
         <div id="instructions">
             "El objetivo de esta tarea es lograr la mayor cantidad posible de puntos. Para lograr esto, \
@@ -176,6 +181,78 @@ fn Instructions(reading_signal: RwSignal<bool>, times_over: RwSignal<bool>, time
                 }>
                 "Comenzar"
             </button>
+        </div>
+    }
+}
+
+#[component]
+fn EndOfGameText(q_signal: RwSignal<bool>) -> impl IntoView {
+    view! {
+        <div class="instructions">
+            <label>
+                "Has concluido esta parte, a continuación se te pedirá responder unas\
+                preguntas sencillas relacionadas al juego anterior."
+            </label>
+            <button class="instructions_ok" on:click=move |_| {
+                q_signal.set(true);
+            }
+            >
+                "Continuar"
+            </button>
+        </div>
+    }
+}
+
+#[component]
+fn Questions(values: RwSignal<[char; 3]>) -> impl IntoView {
+    view! {
+        <div class="question">
+            <label>"¿Qué grupo de cartas eran las que más te daban puntos?"</label>
+            <select
+                on:change=move |ev| {
+                    let new_value = event_target_value(&ev);
+                    let mut vs = values.get();
+                    vs[0] = new_value.chars().next().unwrap();
+                }
+            >
+                <option value='1'>"1"</option>
+                <option value='2'>"2"</option>
+                <option value='3'>"3"</option>
+                <option value='4'>"4"</option>
+                <option value='5'>"5"</option>
+            </select>
+        </div>
+        <div class="question">
+            <label>"¿Con qué grupo de cartas te quedabas con menos puntos?"</label>
+            <select
+                on:change=move |ev| {
+                    let new_value = event_target_value(&ev);
+                    let mut vs = values.get();
+                    vs[1] = new_value.chars().next().unwrap();
+                }
+            >
+                <option value='1'>"1"</option>
+                <option value='2'>"2"</option>
+                <option value='3'>"3"</option>
+                <option value='4'>"4"</option>
+                <option value='5'>"5"</option>
+            </select>
+        </div>
+        <div class="question">
+            <label>"¿Qué grupo de cartas te quitaba puntos con más frecuencia?"</label>
+            <select
+                on:change=move |ev| {
+                    let new_value = event_target_value(&ev);
+                    let mut vs = values.get();
+                    vs[2] = new_value.chars().next().unwrap();
+                }
+            >
+                <option value='1'>"1"</option>
+                <option value='2'>"2"</option>
+                <option value='3'>"3"</option>
+                <option value='4'>"4"</option>
+                <option value='5'>"5"</option>
+            </select>
         </div>
     }
 }
