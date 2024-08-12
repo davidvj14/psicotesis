@@ -19,7 +19,6 @@ pub fn DirectCardGame() -> impl IntoView {
 pub fn CardGame(game_signal: RwSignal<bool>, gameqs_signal: RwSignal<bool>) -> impl IntoView {
     let reading_signal = create_rw_signal(true);
     let state = create_rw_signal(GameState::new());
-    let values = create_rw_signal(['\0'; 3]);
     let q_signal = create_rw_signal(false);
     let times_over = create_rw_signal(false);
     let timer_signal = create_rw_signal(0i64);
@@ -95,7 +94,7 @@ pub fn CardGame(game_signal: RwSignal<bool>, gameqs_signal: RwSignal<bool>) -> i
                     <EndOfGameText q_signal=q_signal/>
                 </Show>
                 <Show when=move || q_signal.get()>
-                    <Questions values=values/>
+                    <Questions state=state/>
                 </Show>
             </div>
         </body>
@@ -204,15 +203,15 @@ fn EndOfGameText(q_signal: RwSignal<bool>) -> impl IntoView {
 }
 
 #[component]
-fn Questions(values: RwSignal<[char; 3]>) -> impl IntoView {
+fn Questions(state: RwSignal<GameState>) -> impl IntoView {
     view! {
         <div class="question">
             <label>"¿Qué grupo de cartas eran las que más te daban puntos?"</label>
             <select
                 on:change=move |ev| {
                     let new_value = event_target_value(&ev);
-                    let mut vs = values.get();
-                    vs[0] = new_value.chars().next().unwrap();
+                    set_q_val(state, 0, new_value.chars().next().unwrap());
+                    logging::log!("{state:?}");
                 }
             >
                 <option value='1'>"1"</option>
@@ -227,8 +226,8 @@ fn Questions(values: RwSignal<[char; 3]>) -> impl IntoView {
             <select
                 on:change=move |ev| {
                     let new_value = event_target_value(&ev);
-                    let mut vs = values.get();
-                    vs[1] = new_value.chars().next().unwrap();
+                    set_q_val(state, 0, new_value.chars().next().unwrap());
+                    logging::log!("{state:?}");
                 }
             >
                 <option value='1'>"1"</option>
@@ -243,8 +242,8 @@ fn Questions(values: RwSignal<[char; 3]>) -> impl IntoView {
             <select
                 on:change=move |ev| {
                     let new_value = event_target_value(&ev);
-                    let mut vs = values.get();
-                    vs[2] = new_value.chars().next().unwrap();
+                    set_q_val(state, 0, new_value.chars().next().unwrap());
+                    logging::log!("{state:?}");
                 }
             >
                 <option value='1'>"1"</option>
@@ -254,5 +253,11 @@ fn Questions(values: RwSignal<[char; 3]>) -> impl IntoView {
                 <option value='5'>"5"</option>
             </select>
         </div>
+        <br/>
+        <button on:click=|_| {
+
+        }>
+            "Continuar"
+        </button>
     }
 }

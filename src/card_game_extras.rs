@@ -7,29 +7,36 @@ pub struct GameState {
     pub time: i64,
     pub choices: [u8; 5],
     pub score: i64,
+    pub qs: [char; 3],
 }
 
 pub fn inc_choice(state: RwSignal<GameState>, n: i64) {
     let mut s = state.get();
     s.choices[n as usize - 1] += 1;
-    state.set(GameState {ttf: s.ttf, time: s.time, choices: s.choices, score: s.score})
+    state.set(GameState {ttf: s.ttf, time: s.time, choices: s.choices, score: s.score, qs: s.qs})
 }
 
 pub fn inc_time(state: RwSignal<GameState>, time: i64) {
     let mut s = state.get();
     s.time += time;
-    state.set(GameState {ttf: s.ttf, time: s.time, choices: s.choices, score: s.score})
+    state.set(GameState {ttf: s.ttf, time: s.time, choices: s.choices, score: s.score, qs: s.qs})
 }
 
 pub fn set_ttf(state: RwSignal<GameState>, time: i64) {
     let s = state.get();
-    state.set(GameState {ttf: time, time: s.time, choices: s.choices, score: s.score})
+    state.set(GameState {ttf: time, time: s.time, choices: s.choices, score: s.score, qs: s.qs})
 }
 
 pub fn update_score(state: RwSignal<GameState>, card: i64, punish: i64) {
     let mut s = state.get();
     s.score = s.score + card + punish;
-    state.set(GameState {ttf: s.ttf, time: s.time, choices: s.choices, score: s.score})
+    state.set(GameState {ttf: s.ttf, time: s.time, choices: s.choices, score: s.score, qs: s.qs})
+}
+
+pub fn set_q_val(state: RwSignal<GameState>, n: usize, val: char) {
+    let mut s = state.get();
+    s.qs[n] = val;
+    state.set(GameState {ttf: s.ttf, time: s.time, choices: s.choices, score: s.score, qs: s.qs})
 }
 
 pub fn reached_max(state: RwSignal<GameState>) -> bool {
@@ -44,6 +51,7 @@ impl GameState {
             time: 0,
             choices: [0; 5],
             score: 0,
+            qs: ['\0'; 3],
         }
     }
 }
