@@ -1,6 +1,5 @@
-use leptos::*;
-use serde::{Serialize, Deserialize};
 use crate::card_sorting_extras::TestResult;
+use leptos::*;
 
 #[server(ProcessCardSorting)]
 pub async fn process_card_sorting(result: TestResult) -> Result<(), ServerFnError> {
@@ -11,7 +10,7 @@ pub async fn process_card_sorting(result: TestResult) -> Result<(), ServerFnErro
 
     let conn = &mut db().await.unwrap();
 
-    let x = sqlx::query("INSERT INTO cardsorting VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)")
+    let _ = sqlx::query("INSERT INTO cardsorting VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)")
         .bind(cookie)
         .bind(result.score)
         .bind(result.errors)
@@ -23,8 +22,6 @@ pub async fn process_card_sorting(result: TestResult) -> Result<(), ServerFnErro
         .bind(result.time)
         .execute(conn)
         .await;
-
-    println!("{:?}", x);
 
     Ok(())
 }

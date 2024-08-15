@@ -1,9 +1,12 @@
 #![allow(unused)]
 
-use leptos::*;
-use leptos_meta::*;
-use chrono::{prelude::*, Duration};
 use crate::card_game_extras::*;
+use chrono::{prelude::*, Duration};
+use leptos::{ev::Event, *};
+use leptos_meta::*;
+
+const GAME_DURATION: u64 = 300;
+const MAX_CARDS: i64 = 54;
 
 #[component]
 pub fn DirectCardGame() -> impl IntoView {
@@ -11,12 +14,13 @@ pub fn DirectCardGame() -> impl IntoView {
     let qs = create_rw_signal(false);
 
     view! {
-        <CardGame game_signal=gs gameqs_signal=qs/>
+        <CardGame game_signal=gs end_signal=qs/>
     }
 }
 
 #[component]
-pub fn CardGame(game_signal: RwSignal<bool>, gameqs_signal: RwSignal<bool>) -> impl IntoView {
+pub fn CardGame(game_signal: RwSignal<bool>, end_signal: RwSignal<bool>) -> impl IntoView {
+    let gs = create_rw_signal(GameSignals::new(game_signal, end_signal));
     let reading_signal = create_rw_signal(true);
     let state = create_rw_signal(GameState::new());
     let q_signal = create_rw_signal(false);
@@ -98,11 +102,15 @@ pub fn CardGame(game_signal: RwSignal<bool>, gameqs_signal: RwSignal<bool>) -> i
                 </Show>
             </div>
         </body>
-    }    
+    }
 }
 
 #[component]
-fn UpperCard(signal: RwSignal<bool>, stack: &'static [Card; 18], index: RwSignal<usize>) -> impl IntoView {
+fn UpperCard(
+    signal: RwSignal<bool>,
+    stack: &'static [Card; 18],
+    index: RwSignal<usize>,
+) -> impl IntoView {
     view! {
         <div class:backside=move || !signal.get()
              class:reveal-neutral=move || {signal.get() && stack[index.get() - 1].value == 0 }
@@ -115,8 +123,14 @@ fn UpperCard(signal: RwSignal<bool>, stack: &'static [Card; 18], index: RwSignal
 }
 
 #[component]
-fn LowerCard(signal: RwSignal<bool>, n: i64, stack: &'static [Card; 18], index: RwSignal<usize>,
-    timer: RwSignal<i64>, state: RwSignal<GameState>) -> impl IntoView {
+fn LowerCard(
+    signal: RwSignal<bool>,
+    n: i64,
+    stack: &'static [Card; 18],
+    index: RwSignal<usize>,
+    timer: RwSignal<i64>,
+    state: RwSignal<GameState>,
+) -> impl IntoView {
     view! {
         <div class="card" style:background-color= move || {
             if signal.get() {
@@ -126,32 +140,52 @@ fn LowerCard(signal: RwSignal<bool>, n: i64, stack: &'static [Card; 18], index: 
             }
         }
             on:click = move |_| {
-            if signal.get() {
-                return;
-            }
-            let time = Utc::now().timestamp_millis() - timer.get();
-            if state.get().ttf == 0 {
-                set_ttf(state, time);
-            }
-            inc_choice(state, n);
-            inc_time(state, time);
-            if index.get() >= 18 {
-                index.set(0);
-            }
-            let p_val = stack[index.get()].value;
-            update_score(state, n, p_val);
-            timer.set(Utc::now().timestamp_millis());
-            index.set(index.get() + 1);
-            logging::log!("{:?}", state.get());
-            signal.set(true);
-            set_timeout(move || signal.set(false), std::time::Duration::from_millis(800));
-        }>{n}</div>
+                if signal.get() {
+                    return;
+                }
+                let time = Utc::now().timestamp_millis() - timer.get();
+                if state.get().ttf == 0 {
+                    set_ttf(state, time);
+                }
+                inc_choice(state, n);
+                inc_time(state, time);
+                if index.get() >= 18 {
+                    index.set(0);
+                }
+                let p_val = stack[index.get()].value;
+                update_score(state, n, p_val);
+                timer.set(Utc::now().timestamp_millis());
+                index.set(index.get() + 1);
+                logging::log!("{:?}", state.get());
+                signal.set(true);
+                set_timeout(move || signal.set(false), std::time::Duration::from_millis(800));
+            }>{n}</div>
     }
 }
 
+fn card_click_handler(gs: RwSignal<GameSignals>, n: i64) {
+    if any_card_active(gs) {
+        return;
+    }
+
+    let time = Utc::now().timestamp_millis() - get_timer(gs);
+    set_timer_now(gs);
+    let state = gs.get().state;
+
+    if is_first(gs) {
+        set_ttf(state, time);
+    }
+
+    inc_choice(state, n);
+    inc_time(state, time);
+}
+
 #[component]
-fn Instructions(reading_signal: RwSignal<bool>, times_over: RwSignal<bool>,
-    timer_signal: RwSignal<i64>) -> impl IntoView {
+fn Instructions(
+    reading_signal: RwSignal<bool>,
+    times_over: RwSignal<bool>,
+    timer_signal: RwSignal<i64>,
+) -> impl IntoView {
     view! {
         <div id="instructions">
             "El objetivo de esta tarea es lograr la mayor cantidad posible de puntos. Para lograr esto, \
@@ -163,7 +197,7 @@ fn Instructions(reading_signal: RwSignal<bool>, times_over: RwSignal<bool>,
             "En la parte superior de la pantalla se encontrará otros 5 grupos de cartas que estarán \
             ocultas, estas estarán alineadas a los 5 grupos inferiores. Estas pueden o no contener \
             castigos. Cada vez que selecciones una carta de la parte inferior, se revelará la carta \
-            del grupo oculto que le corresponde." 
+            del grupo oculto que le corresponde."
             <br/>
             <br/>
             "Si la carta oculta revela un “0” conservaras los puntos, mientras que si se muestra un \
@@ -175,7 +209,7 @@ fn Instructions(reading_signal: RwSignal<bool>, times_over: RwSignal<bool>,
                     timer_signal.set(Utc::now().timestamp_millis());
                     set_timeout(
                         move|| times_over.set(true),
-                        std::time::Duration::new(300, 0)
+                        std::time::Duration::new(GAME_DURATION, 0)
                     );
                 }>
                 "Comenzar"
@@ -210,15 +244,14 @@ fn Questions(state: RwSignal<GameState>) -> impl IntoView {
             <select
                 on:change=move |ev| {
                     let new_value = event_target_value(&ev);
-                    set_q_val(state, 0, new_value.chars().next().unwrap());
-                    logging::log!("{state:?}");
+                    set_q_val(state, 0, new_value.parse::<u8>().unwrap());
                 }
             >
-                <option value='1'>"1"</option>
-                <option value='2'>"2"</option>
-                <option value='3'>"3"</option>
-                <option value='4'>"4"</option>
-                <option value='5'>"5"</option>
+                <option value=1>"1"</option>
+                <option value=2>"2"</option>
+                <option value=3>"3"</option>
+                <option value=4>"4"</option>
+                <option value=5>"5"</option>
             </select>
         </div>
         <div class="question">
@@ -226,15 +259,14 @@ fn Questions(state: RwSignal<GameState>) -> impl IntoView {
             <select
                 on:change=move |ev| {
                     let new_value = event_target_value(&ev);
-                    set_q_val(state, 0, new_value.chars().next().unwrap());
-                    logging::log!("{state:?}");
+                    set_q_val(state, 1, new_value.parse::<u8>().unwrap());
                 }
             >
-                <option value='1'>"1"</option>
-                <option value='2'>"2"</option>
-                <option value='3'>"3"</option>
-                <option value='4'>"4"</option>
-                <option value='5'>"5"</option>
+                <option value=1>"1"</option>
+                <option value=2>"2"</option>
+                <option value=3>"3"</option>
+                <option value=4>"4"</option>
+                <option value=5>"5"</option>
             </select>
         </div>
         <div class="question">
@@ -242,20 +274,21 @@ fn Questions(state: RwSignal<GameState>) -> impl IntoView {
             <select
                 on:change=move |ev| {
                     let new_value = event_target_value(&ev);
-                    set_q_val(state, 0, new_value.chars().next().unwrap());
-                    logging::log!("{state:?}");
+                    set_q_val(state, 2, new_value.parse::<u8>().unwrap());
                 }
             >
-                <option value='1'>"1"</option>
-                <option value='2'>"2"</option>
-                <option value='3'>"3"</option>
-                <option value='4'>"4"</option>
-                <option value='5'>"5"</option>
+                <option value=1>"1"</option>
+                <option value=2>"2"</option>
+                <option value=3>"3"</option>
+                <option value=4>"4"</option>
+                <option value=5>"5"</option>
             </select>
         </div>
         <br/>
-        <button on:click=|_| {
-
+        <button on:click=move |_| {
+            spawn_local(async move {
+                let _ = crate::card_game::process_card_game(state.get()).await;
+            })
         }>
             "Continuar"
         </button>

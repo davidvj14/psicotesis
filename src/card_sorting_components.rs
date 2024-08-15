@@ -10,7 +10,7 @@ struct State {
     answers: RwSignal<Vec<Answer>>,
     current_criterion: RwSignal<Criterion>,
     current_index: RwSignal<usize>,
-    status: RwSignal<GameStatus>
+    status: RwSignal<GameStatus>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -86,19 +86,21 @@ fn Incorrect(incorrect_signal: RwSignal<bool>) -> impl IntoView {
 }
 
 #[component]
-fn Finished(state: RwSignal<State>, sorting_signal: RwSignal<bool>, game_signal: RwSignal<bool>) -> impl IntoView {
+fn Finished(
+    state: RwSignal<State>,
+    sorting_signal: RwSignal<bool>,
+    game_signal: RwSignal<bool>,
+) -> impl IntoView {
     let status = move || state.get().status;
-    let s = create_rw_signal(String::from("Has concluido la prueba"));
     view! {
         <Show when=move || status().get() == GameStatus::TimeOver || status().get() == GameStatus::Done>
             <div>
-                <h1>
-                {s.get()}
-                </h1>
+                <label>
+                "Has concluido la prueba"
+                </label>
             </div>
             <button on:click=move |_| {
                 let result = crate::card_sorting_extras::TestResult::eval(&state.get().answers.get());
-                s.set(format!("{}", result));
                 spawn_local(async move {
                     let _ = crate::card_sorting::process_card_sorting(result).await;
                 });
@@ -113,7 +115,7 @@ fn Finished(state: RwSignal<State>, sorting_signal: RwSignal<bool>, game_signal:
 
 #[component]
 fn CriteriaCards() -> impl IntoView {
-    view!{
+    view! {
         <div id="criteria-cards">
             <CriterionCard card=CRITERION_CARDS[0].clone()/>
             <CriterionCard card=CRITERION_CARDS[1].clone()/>
@@ -133,8 +135,12 @@ fn CriterionCard(card: Card) -> impl IntoView {
 }
 
 #[component]
-fn SortingAreas(state: RwSignal<State>, incorrect_signal: RwSignal<bool>, timer_signal: RwSignal<i64>) -> impl IntoView {
-    view!{
+fn SortingAreas(
+    state: RwSignal<State>,
+    incorrect_signal: RwSignal<bool>,
+    timer_signal: RwSignal<i64>,
+) -> impl IntoView {
+    view! {
         <div id="card-area">
             <SortingArea
                 a_id = 0
@@ -214,12 +220,16 @@ fn show_incorrect(incorrect_signal: RwSignal<bool>) {
     incorrect_signal.set(true);
     set_timeout(
         move || incorrect_signal.set(false),
-        std::time::Duration::new(1, 0)
+        std::time::Duration::new(1, 0),
     );
 }
 
 #[component]
-fn Instructions(reading_signal: RwSignal<bool>, times_over: RwSignal<GameStatus>, timer_signal: RwSignal<i64>) -> impl IntoView {
+fn Instructions(
+    reading_signal: RwSignal<bool>,
+    times_over: RwSignal<GameStatus>,
+    timer_signal: RwSignal<i64>,
+) -> impl IntoView {
     view! {
         <div id="instructions" class="container">
         "\

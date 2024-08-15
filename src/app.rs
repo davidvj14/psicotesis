@@ -1,7 +1,7 @@
+use crate::card_game_components::*;
 use crate::card_sorting_components::{CardSorting, DirectCardSorting};
 use crate::error_template::{AppError, ErrorTemplate};
 use crate::questions_components::Questions;
-use crate::card_game_components::*;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -37,8 +37,7 @@ fn Tests() -> impl IntoView {
     let barrat = create_rw_signal(false);
     let card_sorting = create_rw_signal(false);
     let card_game = create_rw_signal(false);
-    let card_gameqs = create_rw_signal(false);
-    let thanks = create_rw_signal(false);
+    let ending = create_rw_signal(false);
 
     view! {
         <AnimatedShow
@@ -71,23 +70,7 @@ fn Tests() -> impl IntoView {
             hide_class = "fade-out-1000"
             hide_delay = Duration::from_millis(1000)
         >
-            <CardGame game_signal=card_game gameqs_signal=card_gameqs/>
-        </AnimatedShow>
-        <AnimatedShow
-            when=card_gameqs
-            show_class = "fade-in-1000"
-            hide_class = "fade-out-1000"
-            hide_delay = Duration::from_millis(1000)
-        >
-            <crate::questions_components::Questions questions_signal=questions barrat_signal=barrat/>
-        </AnimatedShow>
-        <AnimatedShow
-            when=thanks
-            show_class = "fade-in-1000"
-            hide_class = "fade-out-1000"
-            hide_delay = Duration::from_millis(1000)
-        >
-            <crate::questions_components::Questions questions_signal=questions barrat_signal=barrat/>
+            <CardGame game_signal=card_game end_signal=ending/>
         </AnimatedShow>
     }
 }
