@@ -1,12 +1,9 @@
-#![allow(unused)]
-
 use crate::card_game_extras::*;
-use chrono::{prelude::*, Duration};
-use leptos::{ev::Event, *};
+use chrono::prelude::*;
+use leptos::*;
 use leptos_meta::*;
 
 const GAME_DURATION: u64 = 300;
-const MAX_CARDS: i64 = 54;
 
 #[component]
 pub fn DirectCardGame() -> impl IntoView {
@@ -20,88 +17,93 @@ pub fn DirectCardGame() -> impl IntoView {
 
 #[component]
 pub fn CardGame(game_signal: RwSignal<bool>, end_signal: RwSignal<bool>) -> impl IntoView {
-    let gs = create_rw_signal(GameSignals::new(game_signal, end_signal));
-    let reading_signal = create_rw_signal(true);
-    let state = create_rw_signal(GameState::new());
-    let q_signal = create_rw_signal(false);
-    let times_over = create_rw_signal(false);
-    let timer_signal = create_rw_signal(0i64);
-    let card1_signal = create_rw_signal(false);
-    let card2_signal = create_rw_signal(false);
-    let card3_signal = create_rw_signal(false);
-    let card4_signal = create_rw_signal(false);
-    let card5_signal = create_rw_signal(false);
-    let stack1_signal = create_rw_signal(0);
-    let stack2_signal = create_rw_signal(0);
-    let stack3_signal = create_rw_signal(0);
-    let stack4_signal = create_rw_signal(0);
-    let stack5_signal = create_rw_signal(0);
+    let gs = create_rw_signal(GameSignals::new());
     view! {
         <Stylesheet href="card_game.css"/>
         <body>
             <div class="container">
-                <Show when=move || reading_signal.get()>
-                    <Instructions reading_signal=reading_signal times_over=times_over timer_signal=timer_signal/>
+                <Show when=move || gs.get().ui_state.reading_instructions.get() >
+                    <Instructions gs=gs/>
                 </Show>
-                <Show when=move || !reading_signal.get() && !times_over.get() && !reached_max(state)>
+                <Show when=move || gs.get().ui_state.game.get() >
                     <div class="score-container">
                         <div class="score">
-                            {state.get().score}
+                            {move || get_score(gs)}
                         </div>
                     </div>
                     <div class="score-bar-container">
                         <div class="score-bar">
-                            <div class="score-bar-inner" id="scoreBar"
-                                style:width=move || {
-                                    format!("{}%", (state.get().score.abs() as f64 / 190.0) * 100.0)
-                                }
-                                style:left=move || {
-                                    if state.get().score >= 0 {
-                                        format!("50%")
-                                    } else {
-                                        format!("")
-                                    }
-                                }
-                                style:right=move || {
-                                    if state.get().score < 0 {
-                                        format!("50%")
-                                    } else {
-                                        format!("")
-                                    }
-                                }
-                                style:background-color=move || {if state.get().score > 0 {"green"} else {"red"}}
-                                >
-                            </div>
+                            <ScoreBar gs=gs/>
                         </div>
                     </div>
                     <div class="cards-row" id="upperRow">
-                        <UpperCard signal=card1_signal stack=&STACK1 index=stack1_signal/>
-                        <UpperCard signal=card2_signal stack=&STACK2 index=stack2_signal/>
-                        <UpperCard signal=card3_signal stack=&STACK3 index=stack3_signal/>
-                        <UpperCard signal=card4_signal stack=&STACK4 index=stack4_signal/>
-                        <UpperCard signal=card5_signal stack=&STACK5 index=stack5_signal/>
+                        <UpperCards gs=gs/>
                     </div>
                     <div class="cards-row" id="lowerRow">
-                        <LowerCard signal=card1_signal n=1 stack=&STACK1
-                            index=stack1_signal timer=timer_signal state=state/>
-                        <LowerCard signal=card2_signal n=2 stack=&STACK2
-                            index=stack2_signal timer=timer_signal state=state/>
-                        <LowerCard signal=card3_signal n=3 stack=&STACK3
-                            index=stack3_signal timer=timer_signal state=state/>
-                        <LowerCard signal=card4_signal n=4 stack=&STACK4
-                            index=stack4_signal timer=timer_signal state=state/>
-                        <LowerCard signal=card5_signal n=5 stack=&STACK5
-                            index=stack5_signal timer=timer_signal state=state/>
+                        <LowerCards gs=gs/>
                     </div>
                 </Show>
-                <Show when=move || {(times_over.get() || reached_max(state)) && !q_signal.get() }>
-                    <EndOfGameText q_signal=q_signal/>
+                <Show when=move || gs.get().ui_state.show_end.get() >
+                    <EndOfGameText gs=gs/>
                 </Show>
-                <Show when=move || q_signal.get()>
-                    <Questions state=state/>
+                <Show when=move || gs.get().ui_state.questions.get() >
+                    <Questions gs=gs/>
                 </Show>
             </div>
         </body>
+    }
+}
+
+#[component]
+fn ScoreBar(gs: RwSignal<GameSignals>) -> impl IntoView {
+    view! {
+        <div class="score-bar">
+            <div class="score-bar-inner" id="scoreBar"
+                style:width=move || {
+                    format!("{}%", (get_score(gs) as f64 / 190.0) * 100.0)
+                }
+                style:left=move || {
+                    if get_score(gs) >= 0 {
+                        format!("50%")
+                    } else {
+                        format!("")
+                    }
+                }
+                style:right=move || {
+                    if get_score(gs) < 0 {
+                        format!("50%")
+                    } else {
+                        format!("")
+                    }
+                }
+                style:background-color=move || {
+                    if get_score(gs) > 0 {"green"} else {"red"}
+                }
+                >
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn LowerCards(gs: RwSignal<GameSignals>) -> impl IntoView {
+    view! {
+        {
+            (1..=5).map(|x| view! {
+                <LowerCard gs={gs} n={x} />
+            }).collect::<Vec<_>>()
+        }
+    }
+}
+
+#[component]
+fn UpperCards(gs: RwSignal<GameSignals>) -> impl IntoView {
+    view !{
+        {
+            (0..=4).map(|x| view! {
+                <UpperCard signal={gs.get().card_signals[x]} stack={&STACKS[x]} index={gs.get().stack_indices[x]}/>
+            }).collect::<Vec<_>>()
+        }
     }
 }
 
@@ -124,41 +126,19 @@ fn UpperCard(
 
 #[component]
 fn LowerCard(
-    signal: RwSignal<bool>,
+    gs: RwSignal<GameSignals>,
     n: i64,
-    stack: &'static [Card; 18],
-    index: RwSignal<usize>,
-    timer: RwSignal<i64>,
-    state: RwSignal<GameState>,
 ) -> impl IntoView {
     view! {
         <div class="card" style:background-color= move || {
-            if signal.get() {
+            if gs.get().card_signals[n as usize - 1].get() {
                 format!("#999999")
             } else {
                 format!("#ffffff")
             }
         }
             on:click = move |_| {
-                if signal.get() {
-                    return;
-                }
-                let time = Utc::now().timestamp_millis() - timer.get();
-                if state.get().ttf == 0 {
-                    set_ttf(state, time);
-                }
-                inc_choice(state, n);
-                inc_time(state, time);
-                if index.get() >= 18 {
-                    index.set(0);
-                }
-                let p_val = stack[index.get()].value;
-                update_score(state, n, p_val);
-                timer.set(Utc::now().timestamp_millis());
-                index.set(index.get() + 1);
-                logging::log!("{:?}", state.get());
-                signal.set(true);
-                set_timeout(move || signal.set(false), std::time::Duration::from_millis(800));
+                card_click_handler(gs, n);
             }>{n}</div>
     }
 }
@@ -170,21 +150,41 @@ fn card_click_handler(gs: RwSignal<GameSignals>, n: i64) {
 
     let time = Utc::now().timestamp_millis() - get_timer(gs);
     set_timer_now(gs);
-    let state = gs.get().state;
+    let state = gs.get().game_state;
 
     if is_first(gs) {
-        set_ttf(state, time);
+        set_ttf(gs, time);
     }
 
-    inc_choice(state, n);
-    inc_time(state, time);
+    inc_choice(gs, n);
+    inc_time(gs, time);
+
+    let index_signal = gs.get().stack_indices[n as usize - 1];
+    if index_signal.get() >= 18 {
+        index_signal.set(0);
+    }
+
+    let punish_card_value = STACKS[n as usize - 1][index_signal.get()].value;
+    update_score(gs, n, punish_card_value);
+    index_signal.set(index_signal.get() + 1);
+    gs.get().card_signals[n as usize - 1].set(true);
+
+    set_timeout(move || gs.get().card_signals[n as usize - 1].set(false), std::time::Duration::from_millis(800));
+
+    if reached_max(gs) {
+        set_timeout(
+            move || {
+                gs.get().ui_state.game.set(false);
+                gs.get().ui_state.show_end.set(true);
+            },
+            std::time::Duration::from_millis(800)
+        );
+    }
 }
 
 #[component]
 fn Instructions(
-    reading_signal: RwSignal<bool>,
-    times_over: RwSignal<bool>,
-    timer_signal: RwSignal<i64>,
+    gs: RwSignal<GameSignals>,
 ) -> impl IntoView {
     view! {
         <div id="instructions">
@@ -205,10 +205,14 @@ fn Instructions(
             <br/>
             <br/>
             <button id="instructions_ok" on:click=move |_| {
-                    reading_signal.set(false);
-                    timer_signal.set(Utc::now().timestamp_millis());
+                    start_game(gs);
                     set_timeout(
-                        move|| times_over.set(true),
+                        move|| {
+                            if gs.get().ui_state.game.get() {
+                                gs.get().ui_state.game.set(false);
+                                gs.get().ui_state.show_end.set(true);
+                            }
+                        },
                         std::time::Duration::new(GAME_DURATION, 0)
                     );
                 }>
@@ -219,7 +223,7 @@ fn Instructions(
 }
 
 #[component]
-fn EndOfGameText(q_signal: RwSignal<bool>) -> impl IntoView {
+fn EndOfGameText(gs: RwSignal<GameSignals>) -> impl IntoView {
     view! {
         <div class="instructions">
             <label>
@@ -227,7 +231,8 @@ fn EndOfGameText(q_signal: RwSignal<bool>) -> impl IntoView {
                 preguntas sencillas relacionadas al juego anterior."
             </label>
             <button class="instructions_ok" on:click=move |_| {
-                q_signal.set(true);
+                gs.get().ui_state.show_end.set(false);
+                gs.get().ui_state.questions.set(true);
             }
             >
                 "Continuar"
@@ -237,14 +242,14 @@ fn EndOfGameText(q_signal: RwSignal<bool>) -> impl IntoView {
 }
 
 #[component]
-fn Questions(state: RwSignal<GameState>) -> impl IntoView {
+fn Questions(gs: RwSignal<GameSignals>) -> impl IntoView {
     view! {
         <div class="question">
             <label>"¿Qué grupo de cartas eran las que más te daban puntos?"</label>
             <select
                 on:change=move |ev| {
                     let new_value = event_target_value(&ev);
-                    set_q_val(state, 0, new_value.parse::<u8>().unwrap());
+                    set_q_val(gs, 0, new_value.parse::<i64>().unwrap());
                 }
             >
                 <option value=1>"1"</option>
@@ -259,7 +264,7 @@ fn Questions(state: RwSignal<GameState>) -> impl IntoView {
             <select
                 on:change=move |ev| {
                     let new_value = event_target_value(&ev);
-                    set_q_val(state, 1, new_value.parse::<u8>().unwrap());
+                    set_q_val(gs, 1, new_value.parse::<i64>().unwrap());
                 }
             >
                 <option value=1>"1"</option>
@@ -274,7 +279,7 @@ fn Questions(state: RwSignal<GameState>) -> impl IntoView {
             <select
                 on:change=move |ev| {
                     let new_value = event_target_value(&ev);
-                    set_q_val(state, 2, new_value.parse::<u8>().unwrap());
+                    set_q_val(gs, 2, new_value.parse::<i64>().unwrap());
                 }
             >
                 <option value=1>"1"</option>
@@ -287,7 +292,7 @@ fn Questions(state: RwSignal<GameState>) -> impl IntoView {
         <br/>
         <button on:click=move |_| {
             spawn_local(async move {
-                let _ = crate::card_game::process_card_game(state.get()).await;
+                let _ = crate::card_game::process_card_game(gs.get().game_state).await;
             })
         }>
             "Continuar"

@@ -19,5 +19,5 @@ CREATE TABLE IF NOT EXISTS cardsorting
 
 CREATE TABLE IF NOT EXISTS cardgame
   ( id int PRIMARY KEY NOT NULL, score int NOT NULL, answers smallint ARRAY[5] NOT NULL
-  , ttf int NOT NULL, time int NOT NULL, questions char(3) NOT NULL,
+  , ttf int NOT NULL, time int NOT NULL, questions smallint ARRAY[3] NOT NULL
   , FOREIGN KEY (id) REFERENCES participantes(id));
