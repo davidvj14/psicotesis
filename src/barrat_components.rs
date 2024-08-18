@@ -1,14 +1,15 @@
 use crate::barrat;
+use crate::app::Stage;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
 
 #[component]
-pub fn Barrat(barrat_signal: RwSignal<bool>, card_sorting_signal: RwSignal<bool>) -> impl IntoView {
+pub fn Barrat(stage: RwSignal<Stage>) -> impl IntoView {
     let action = create_server_action::<barrat::ProcessBarrat>();
     view! {
         <Stylesheet href="barrat.css"/>
-        <ActionForm action=action on:submit=move |_| {barrat_signal.set(false); card_sorting_signal.set(true);}>
+        <ActionForm action=action on:submit=move |_| stage.set(Stage::CardSorting)>
         <div class="container">
             <table>
                 <thead>

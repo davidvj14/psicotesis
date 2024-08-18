@@ -2,6 +2,8 @@ use crate::card_game_components::*;
 use crate::card_sorting_components::{CardSorting, DirectCardSorting};
 use crate::error_template::{AppError, ErrorTemplate};
 use crate::questions_components::Questions;
+use crate::barrat_components::Barrat;
+use crate::card_game_components::CardGame;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -26,51 +28,45 @@ pub enum Stage {
     Barrat,
     CardSorting,
     CardGame,
-    CardGameQs,
     Thanks,
 }
 
 #[component]
 fn Tests() -> impl IntoView {
-    //let (stage, stage_setter) = create_signal(Stage::Questions); :(
-    let questions = create_rw_signal(true);
-    let barrat = create_rw_signal(false);
-    let card_sorting = create_rw_signal(false);
-    let card_game = create_rw_signal(false);
-    let ending = create_rw_signal(false);
+    let stage = create_rw_signal(Stage::Questions);
 
     view! {
         <AnimatedShow
-            when=questions
+            when=MaybeSignal::derive(move || stage.get() == Stage::Questions)
             show_class = "fade-in-1000"
             hide_class = "fade-out-1000"
             hide_delay = Duration::from_millis(1000)
         >
-            <Questions questions_signal=questions barrat_signal=barrat/>
+            <Questions stage=stage/>
         </AnimatedShow>
         <AnimatedShow
-            when=barrat
+            when=MaybeSignal::derive(move || stage.get() == Stage::Barrat)
             show_class = "fade-in-1000"
             hide_class = "fade-out-1000"
             hide_delay = Duration::from_millis(1000)
         >
-            <crate::barrat_components::Barrat barrat_signal=barrat card_sorting_signal=card_sorting/>
+            <Barrat stage=stage/>
         </AnimatedShow>
         <AnimatedShow
-            when=card_sorting
+            when=MaybeSignal::derive(move || stage.get() == Stage::CardSorting)
             show_class = "fade-in-1000"
             hide_class = "fade-out-1000"
             hide_delay = Duration::from_millis(1000)
         >
-            <CardSorting sorting_signal=card_sorting game_signal=card_game/>
+            <CardSorting stage=stage/>
         </AnimatedShow>
         <AnimatedShow
-            when=card_game
+            when=MaybeSignal::derive(move || stage.get() == Stage::CardGame)
             show_class = "fade-in-1000"
             hide_class = "fade-out-1000"
             hide_delay = Duration::from_millis(1000)
         >
-            <CardGame game_signal=card_game end_signal=ending/>
+            <CardGame stage=stage/>
         </AnimatedShow>
     }
 }

@@ -3,6 +3,9 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "ssr")]
 use sqlx::{FromRow, Row};
 
+#[cfg(feature = "ssr")]
+static CODE: &'static str = "7721";
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ParticipantForm {
     pub age: i32,
@@ -199,4 +202,15 @@ pub async fn process_questions(
     );
 
     Ok(())
+}
+
+#[server(VerifyCode)]
+pub async fn verify_code(code: String) -> Result<(), ServerFnError> {
+    if code == CODE {
+        println!("Code OK :)");
+        return Ok(());
+    } else {
+        println!("Code Not OK :(");
+        return Err(ServerFnError::new(""));
+    }
 }

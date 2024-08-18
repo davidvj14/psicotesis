@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS participantes
 
 CREATE TABLE IF NOT EXISTS barrat
   ( id int PRIMARY KEY NOT NULL, cognitive int NOT NULL, motor int NOT NULL
-  , unplanned int NOT NULL, raw_answers char(30) NOT NULL
+  , unplanned int NOT NULL, raw_answers smallint ARRAY[30] NOT NULL
   , FOREIGN KEY(id) REFERENCES participantes(id));
 
 CREATE TABLE IF NOT EXISTS cardsorting

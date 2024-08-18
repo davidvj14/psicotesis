@@ -1,3 +1,6 @@
+use std::thread::sleep;
+
+use crate::{app::Stage, questions::{verify_code, VerifyCode}};
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -239,16 +242,80 @@ fn LossQ() -> impl IntoView {
 }
 
 #[component]
-pub fn Questions(questions_signal: RwSignal<bool>, barrat_signal: RwSignal<bool>) -> impl IntoView {
+fn Verification(code_signal: RwSignal<String>) -> impl IntoView {
+    view ! {
+        <div class="question">
+            <label>
+                "Ingresa aquí el código que te proporcionó la persona que está aplicando la prueba"
+            </label>
+            <input type="text" name="vcode"
+                on:change=move |ev| {
+                    let new_value = event_target_value(&ev);
+                    code_signal.set(new_value);
+            }/>
+        </div>
+    }
+}
+
+/*
+async fn verify(code: &String) -> Result<(), ()> {
+    let result = create_rw_signal(Err(()));
+    spawn_local(async move {
+        let code = code.clone();
+        let r = crate::questions::verify_code(code).await;
+        if r.is_ok() {
+            result.set(Ok(()));
+        }
+    });
+    if result.get().is_ok() {
+        return Ok(());
+    }
+    Err(())
+}*/
+
+#[component]
+pub fn Questions(stage: RwSignal<Stage>) -> impl IntoView {
     provide_meta_context();
     let pqs = create_server_action::<crate::questions::ProcessQuestions>();
+    let verify_action = create_action(|code: &String| {
+        let code = code.clone();
+        async {
+            verify_code(code).await
+        }
+    });
+    let code_signal = create_rw_signal(String::new());
+    let form_ref = create_node_ref::<html::Form>();
+    let code_result = create_resource(
+        move || code_signal.get(),
+        crate::questions::verify_code
+    );
 
     view! {
         <Stylesheet href="questions.css"/>
         <div class="container">
             <h1>Evaluación neuropsicológica</h1>
-            <h3>Hola, muchas gracias por tomarte el tiempo para participar, por favor contesta con sinceridad, se te asignará un número de participante por lo que tus respuestas serán anónimas.</h3>
-            <ActionForm action=pqs on:submit=move |_| {questions_signal.set(false); barrat_signal.set(true)}>
+            <h3>"Hola, muchas gracias por tomarte el tiempo para participar, por favor contesta con \
+            sinceridad, se te asignará un número de participante por lo que tus respuestas serán anónimas."</h3>
+            <ActionForm action=pqs node_ref=form_ref on:submit=move |ev| {
+                ev.prevent_default();
+                verify_action.dispatch(code_signal.get());
+                create_effect(move |_| {
+                    verify_action.value().with(|result| {
+                        match result {
+                            Some(value) => {
+                                logging::log!("{:?}", result);
+                                if value.is_ok() {
+                                    stage.set(Stage::Barrat);
+                                }
+                            },
+                            None => (),
+                        };
+                    });
+                });
+                if false {
+                    stage.set(Stage::Barrat);
+                }
+            }>
                 <AgeQ/>
                 <SexQ/>
                 <MajorQ/>
@@ -259,6 +326,7 @@ pub fn Questions(questions_signal: RwSignal<bool>, barrat_signal: RwSignal<bool>
                 <AbuseQ/>
                 <ShortageQ/>
                 <LossQ/>
+                <Verification code_signal=code_signal/>
                 <input type="submit" value="Siguiente"/>
             </ActionForm>
         </div>

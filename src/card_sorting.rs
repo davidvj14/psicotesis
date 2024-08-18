@@ -4,7 +4,7 @@ use leptos::*;
 #[server(ProcessCardSorting)]
 pub async fn process_card_sorting(result: TestResult) -> Result<(), ServerFnError> {
     use crate::app::ssr::*;
-    use crate::barrat::get_id_cookie;
+    use crate::extras::get_id_cookie;
 
     let cookie = get_id_cookie().await?;
 

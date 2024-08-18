@@ -12,6 +12,8 @@ pub mod error_template;
 pub mod fileserv;
 pub mod questions;
 pub mod questions_components;
+pub mod barrat_extras;
+pub mod extras;
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]

@@ -1,4 +1,5 @@
 use crate::card_game_extras::*;
+use crate::app::Stage;
 use chrono::prelude::*;
 use leptos::*;
 use leptos_meta::*;
@@ -7,16 +8,13 @@ const GAME_DURATION: u64 = 300;
 
 #[component]
 pub fn DirectCardGame() -> impl IntoView {
-    let gs = create_rw_signal(true);
-    let qs = create_rw_signal(false);
-
     view! {
-        <CardGame game_signal=gs end_signal=qs/>
+        <CardGame stage=create_rw_signal(Stage::CardGame)/>
     }
 }
 
 #[component]
-pub fn CardGame(game_signal: RwSignal<bool>, end_signal: RwSignal<bool>) -> impl IntoView {
+pub fn CardGame(stage: RwSignal<Stage>) -> impl IntoView {
     let gs = create_rw_signal(GameSignals::new());
     view! {
         <Stylesheet href="card_game.css"/>
@@ -47,7 +45,7 @@ pub fn CardGame(game_signal: RwSignal<bool>, end_signal: RwSignal<bool>) -> impl
                     <EndOfGameText gs=gs/>
                 </Show>
                 <Show when=move || gs.get().ui_state.questions.get() >
-                    <Questions gs=gs/>
+                    <Questions gs=gs stage=stage/>
                 </Show>
             </div>
         </body>
@@ -150,7 +148,6 @@ fn card_click_handler(gs: RwSignal<GameSignals>, n: i64) {
 
     let time = Utc::now().timestamp_millis() - get_timer(gs);
     set_timer_now(gs);
-    let state = gs.get().game_state;
 
     if is_first(gs) {
         set_ttf(gs, time);
@@ -242,7 +239,7 @@ fn EndOfGameText(gs: RwSignal<GameSignals>) -> impl IntoView {
 }
 
 #[component]
-fn Questions(gs: RwSignal<GameSignals>) -> impl IntoView {
+fn Questions(gs: RwSignal<GameSignals>, stage: RwSignal<Stage>) -> impl IntoView {
     view! {
         <div class="question">
             <label>"¿Qué grupo de cartas eran las que más te daban puntos?"</label>
@@ -293,6 +290,7 @@ fn Questions(gs: RwSignal<GameSignals>) -> impl IntoView {
         <button on:click=move |_| {
             spawn_local(async move {
                 let _ = crate::card_game::process_card_game(gs.get().game_state).await;
+                stage.set(Stage::Thanks);
             })
         }>
             "Continuar"

@@ -4,7 +4,7 @@ use leptos::*;
 #[server(ProcessCardGame)]
 pub async fn process_card_game(state: GameState) -> Result<(), ServerFnError> {
     use crate::app::ssr::*;
-    use crate::barrat::get_id_cookie;
+    use crate::extras::get_id_cookie;
 
     let cookie = get_id_cookie().await?;
     let conn = &mut db().await.unwrap();

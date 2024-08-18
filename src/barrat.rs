@@ -1,167 +1,7 @@
-#[cfg(feature = "ssr")]
-use std::num::ParseIntError;
-
 use leptos::{server, ServerFnError};
 use serde::{Deserialize, Serialize};
+use crate::barrat_extras::*;
 
-static QUESTIONS: [Question; 30] = [
-    Question {
-        // 1
-        inverse: true,
-        kind: ImpulsivityType::Unplanned,
-    },
-    Question {
-        // 2
-        inverse: false,
-        kind: ImpulsivityType::Motor,
-    },
-    Question {
-        // 3
-        inverse: false,
-        kind: ImpulsivityType::Unplanned,
-    },
-    Question {
-        // 4
-        inverse: false,
-        kind: ImpulsivityType::Cognitive,
-    },
-    Question {
-        // 5
-        inverse: true,
-        kind: ImpulsivityType::Unplanned,
-    },
-    Question {
-        // 6
-        inverse: true,
-        kind: ImpulsivityType::Motor,
-    },
-    Question {
-        // 7
-        inverse: true,
-        kind: ImpulsivityType::Cognitive,
-    },
-    Question {
-        // 8
-        inverse: true,
-        kind: ImpulsivityType::Unplanned,
-    },
-    Question {
-        // 9
-        inverse: false,
-        kind: ImpulsivityType::Motor,
-    },
-    Question {
-        // 10
-        inverse: true,
-        kind: ImpulsivityType::Cognitive,
-    },
-    Question {
-        // 11
-        inverse: true,
-        kind: ImpulsivityType::Unplanned,
-    },
-    Question {
-        // 12
-        inverse: false,
-        kind: ImpulsivityType::Motor,
-    },
-    Question {
-        // 13
-        inverse: true,
-        kind: ImpulsivityType::Cognitive,
-    },
-    Question {
-        // 14
-        inverse: false,
-        kind: ImpulsivityType::Unplanned,
-    },
-    Question {
-        // 15
-        inverse: false,
-        kind: ImpulsivityType::Unplanned,
-    },
-    Question {
-        // 16
-        inverse: false,
-        kind: ImpulsivityType::Cognitive,
-    },
-    Question {
-        // 17
-        inverse: true,
-        kind: ImpulsivityType::Unplanned,
-    },
-    Question {
-        // 18
-        inverse: false,
-        kind: ImpulsivityType::Motor,
-    },
-    Question {
-        // 19
-        inverse: true,
-        kind: ImpulsivityType::Cognitive,
-    },
-    Question {
-        // 20
-        inverse: false,
-        kind: ImpulsivityType::Unplanned,
-    },
-    Question {
-        // 21
-        inverse: false,
-        kind: ImpulsivityType::Motor,
-    },
-    Question {
-        // 22
-        inverse: true,
-        kind: ImpulsivityType::Unplanned,
-    },
-    Question {
-        // 23
-        inverse: false,
-        kind: ImpulsivityType::Motor,
-    },
-    Question {
-        // 24
-        inverse: false,
-        kind: ImpulsivityType::Cognitive,
-    },
-    Question {
-        // 25
-        inverse: false,
-        kind: ImpulsivityType::Unplanned,
-    },
-    Question {
-        // 26
-        inverse: false,
-        kind: ImpulsivityType::Motor,
-    },
-    Question {
-        // 27
-        inverse: false,
-        kind: ImpulsivityType::Cognitive,
-    },
-    Question {
-        // 28
-        inverse: false,
-        kind: ImpulsivityType::Unplanned,
-    },
-    Question {
-        // 29
-        inverse: false,
-        kind: ImpulsivityType::Motor,
-    },
-    Question {
-        // 30
-        inverse: true,
-        kind: ImpulsivityType::Unplanned,
-    },
-];
-
-pub enum ImpulsivityType {
-    Cognitive,
-    Motor,
-    Unplanned,
-}
 
 #[derive(Clone)]
 struct ImpulsivityResult {
@@ -195,74 +35,44 @@ impl<'a> ImpulsivityResult {
     }
 }
 
-pub struct Question {
-    inverse: bool,
-    pub kind: ImpulsivityType,
-}
 
-pub struct QuestionAnswer<'a> {
-    pub q: &'a Question,
-    answer: u8,
-}
-
-impl<'a> QuestionAnswer<'a> {
-    fn get_answer(&self) -> i32 {
-        if self.q.inverse {
-            match self.answer {
-                1 => 4,
-                2 => 3,
-                3 => 1,
-                4 => 0,
-                _ => 0,
-            }
-        } else {
-            match self.answer {
-                1 => 0,
-                2 => 1,
-                3 => 3,
-                4 => 4,
-                _ => 0,
-            }
-        }
-    }
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BarrData {
-    bq1: u8,
-    bq2: u8,
-    bq3: u8,
-    bq4: u8,
-    bq5: u8,
-    bq6: u8,
-    bq7: u8,
-    bq8: u8,
-    bq9: u8,
-    bq10: u8,
-    bq11: u8,
-    bq12: u8,
-    bq13: u8,
-    bq14: u8,
-    bq15: u8,
-    bq16: u8,
-    bq17: u8,
-    bq18: u8,
-    bq19: u8,
-    bq20: u8,
-    bq21: u8,
-    bq22: u8,
-    bq23: u8,
-    bq24: u8,
-    bq25: u8,
-    bq26: u8,
-    bq27: u8,
-    bq28: u8,
-    bq29: u8,
-    bq30: u8,
+    bq1: i64,
+    bq2: i64,
+    bq3: i64,
+    bq4: i64,
+    bq5: i64,
+    bq6: i64,
+    bq7: i64,
+    bq8: i64,
+    bq9: i64,
+    bq10: i64,
+    bq11: i64,
+    bq12: i64,
+    bq13: i64,
+    bq14: i64,
+    bq15: i64,
+    bq16: i64,
+    bq17: i64,
+    bq18: i64,
+    bq19: i64,
+    bq20: i64,
+    bq21: i64,
+    bq22: i64,
+    bq23: i64,
+    bq24: i64,
+    bq25: i64,
+    bq26: i64,
+    bq27: i64,
+    bq28: i64,
+    bq29: i64,
+    bq30: i64,
 }
 
 impl<'a> BarrData {
-    pub fn to_array(&self) -> [u8; 30] {
+    pub fn to_array(&self) -> [i64; 30] {
         [
             self.bq1, self.bq2, self.bq3, self.bq4, self.bq5, self.bq6, self.bq7, self.bq8,
             self.bq9, self.bq10, self.bq11, self.bq12, self.bq13, self.bq14, self.bq15, self.bq16,
@@ -271,7 +81,7 @@ impl<'a> BarrData {
         ]
     }
 
-    pub fn construct_answers(ans: [u8; 30]) -> Vec<QuestionAnswer<'a>> {
+    pub fn construct_answers(ans: [i64; 30]) -> Vec<QuestionAnswer<'a>> {
         let mut answers = Vec::new();
         for i in 0..30 {
             answers.push(QuestionAnswer {
@@ -284,50 +94,26 @@ impl<'a> BarrData {
     }
 }
 
-#[cfg(feature = "ssr")]
-fn parse_id_cookie(cookie: &str) -> Result<i32, ParseIntError> {
-    return Ok(cookie[5..].parse()?);
-}
-
-#[cfg(feature = "ssr")]
-pub async fn get_id_cookie() -> Result<i32, ServerFnError> {
-    use axum::http::HeaderMap;
-    use leptos_axum::extract;
-
-    let hm: HeaderMap = extract().await?;
-    if let Some(cookie_header) = hm.get("cookie") {
-        if let Ok(cookie_header_str) = cookie_header.to_str() {
-            let cookie = parse_id_cookie(cookie_header_str)?;
-            println!("{cookie:?}");
-            return Ok(cookie);
-        }
-    }
-    Err(ServerFnError::MissingArg(String::from("Bad p_id cookie")))
-}
 
 #[server(ProcessBarrat)]
 pub async fn process_barrat(data: BarrData) -> Result<(), ServerFnError> {
     use crate::app::ssr::*;
 
-    let cookie = get_id_cookie().await?;
+    let cookie = crate::extras::get_id_cookie().await?;
     let arr = data.to_array();
     let answers = BarrData::construct_answers(arr);
 
-    let answers_str: String = arr
-        .iter()
-        .map(|x| x.to_string())
-        .collect::<Vec<_>>()
-        .join("");
     let results = ImpulsivityResult::eval(&answers);
     let conn = &mut db().await.unwrap();
 
-    sqlx::query("INSERT INTO barrat VALUES ($1, $2, $3, $4, $5)")
+    let q = sqlx::query("INSERT INTO barrat VALUES ($1, $2, $3, $4, $5)")
         .bind(cookie)
         .bind(results.cognitive)
         .bind(results.motor)
         .bind(results.unplanned)
-        .bind(answers_str)
+        .bind(arr)
         .execute(conn)
-        .await?;
+        .await;
+    println!("{q:?}");
     Ok(())
 }

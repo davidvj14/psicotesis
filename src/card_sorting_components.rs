@@ -1,4 +1,4 @@
-use crate::card_sorting_extras::*;
+use crate::{app::Stage, card_sorting_extras::*};
 use chrono::prelude::*;
 use leptos::*;
 use leptos_meta::*;
@@ -35,15 +35,13 @@ impl State {
 
 #[component]
 pub fn DirectCardSorting() -> impl IntoView {
-    let ss = create_rw_signal(true);
-    let gs = create_rw_signal(false);
     view! {
-        <CardSorting sorting_signal=ss game_signal=gs/>
+        <CardSorting stage=create_rw_signal(Stage::CardSorting)/>
     }
 }
 
 #[component]
-pub fn CardSorting(sorting_signal: RwSignal<bool>, game_signal: RwSignal<bool>) -> impl IntoView {
+pub fn CardSorting(stage: RwSignal<Stage>) -> impl IntoView {
     let reading_signal = create_rw_signal(true);
     let incorrect_signal = create_rw_signal(false);
     let timer_signal = create_rw_signal(0i64);
@@ -55,7 +53,7 @@ pub fn CardSorting(sorting_signal: RwSignal<bool>, game_signal: RwSignal<bool>) 
             <Show when=move || reading_signal.get()>
                 <Instructions reading_signal=reading_signal times_over=state.get().status timer_signal=timer_signal/>
             </Show>
-            <Finished state=state sorting_signal=sorting_signal game_signal=game_signal/>
+            <Finished state=state stage=stage/>
             <Show when=move || {
                 let status = state.get().status.get();
                 return !reading_signal.get() && (status != GameStatus::Done && status != GameStatus::TimeOver)
@@ -88,8 +86,7 @@ fn Incorrect(incorrect_signal: RwSignal<bool>) -> impl IntoView {
 #[component]
 fn Finished(
     state: RwSignal<State>,
-    sorting_signal: RwSignal<bool>,
-    game_signal: RwSignal<bool>,
+    stage: RwSignal<Stage>
 ) -> impl IntoView {
     let status = move || state.get().status;
     view! {
@@ -104,8 +101,7 @@ fn Finished(
                 spawn_local(async move {
                     let _ = crate::card_sorting::process_card_sorting(result).await;
                 });
-                sorting_signal.set(false);
-                game_signal.set(true);
+                stage.set(Stage::CardGame);
             }>
                 "Siguiente"
             </button>
