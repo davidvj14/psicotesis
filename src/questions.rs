@@ -128,9 +128,14 @@ pub async fn process_questions(
     participant: ParticipantForm,
     abuse: Option<Abuse>,
     shortage: Option<Shortage>,
+    code: String,
 ) -> Result<(), ServerFnError> {
     use crate::app::ssr::*;
     use http::{header, HeaderValue};
+    println!("AAA");
+    if let Err(_) = verify_code(code).await {
+        return Err(ServerFnError::new("Bad code"));
+    }
 
     let response = expect_context::<leptos_axum::ResponseOptions>();
     let conn = &mut db().await.unwrap();

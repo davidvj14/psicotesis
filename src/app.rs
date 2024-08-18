@@ -29,6 +29,7 @@ pub enum Stage {
     CardSorting,
     CardGame,
     Thanks,
+    Void,
 }
 
 #[component]
