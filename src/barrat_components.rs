@@ -5,6 +5,14 @@ use leptos_meta::*;
 use leptos_router::*;
 
 #[component]
+pub fn DirectBarrat() -> impl IntoView {
+    let s = create_rw_signal(Stage::Barrat);
+    view! {
+        <Barrat stage=s/>
+    }
+}
+
+#[component]
 pub fn Barrat(stage: RwSignal<Stage>) -> impl IntoView {
     let action = create_server_action::<barrat::ProcessBarrat>();
     view! {

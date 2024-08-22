@@ -2,7 +2,7 @@ use crate::card_game_components::*;
 use crate::card_sorting_components::{CardSorting, DirectCardSorting};
 use crate::error_template::{AppError, ErrorTemplate};
 use crate::questions_components::Questions;
-use crate::barrat_components::Barrat;
+use crate::barrat_components::{Barrat, DirectBarrat};
 use crate::card_game_components::CardGame;
 use leptos::*;
 use leptos_meta::*;
@@ -41,7 +41,7 @@ fn Tests() -> impl IntoView {
             when=MaybeSignal::derive(move || stage.get() == Stage::Questions)
             show_class = "fade-in-1000"
             hide_class = "fade-out-1000"
-            hide_delay = Duration::from_millis(1000)
+            hide_delay = Duration::from_millis(0)
         >
             <Questions stage=stage/>
         </AnimatedShow>
@@ -49,7 +49,7 @@ fn Tests() -> impl IntoView {
             when=MaybeSignal::derive(move || stage.get() == Stage::Barrat)
             show_class = "fade-in-1000"
             hide_class = "fade-out-1000"
-            hide_delay = Duration::from_millis(1000)
+            hide_delay = Duration::from_millis(0)
         >
             <Barrat stage=stage/>
         </AnimatedShow>
@@ -57,7 +57,7 @@ fn Tests() -> impl IntoView {
             when=MaybeSignal::derive(move || stage.get() == Stage::CardSorting)
             show_class = "fade-in-1000"
             hide_class = "fade-out-1000"
-            hide_delay = Duration::from_millis(1000)
+            hide_delay = Duration::from_millis(0)
         >
             <CardSorting stage=stage/>
         </AnimatedShow>
@@ -65,7 +65,7 @@ fn Tests() -> impl IntoView {
             when=MaybeSignal::derive(move || stage.get() == Stage::CardGame)
             show_class = "fade-in-1000"
             hide_class = "fade-out-1000"
-            hide_delay = Duration::from_millis(1000)
+            hide_delay = Duration::from_millis(0)
         >
             <CardGame stage=stage/>
         </AnimatedShow>
@@ -100,6 +100,7 @@ pub fn App() -> impl IntoView {
                 <Routes>
                     <Route path="" view=Tests/>
                     <Route path="cards" view=DirectCardSorting/>
+                    <Route path="barrat" view=DirectBarrat/>
                     <Route path="game" view=DirectCardGame/>
                 </Routes>
             </main>

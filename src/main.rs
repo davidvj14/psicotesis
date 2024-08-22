@@ -1,3 +1,5 @@
+use std::net::SocketAddr;
+
 #[tokio::main]
 async fn main() {
     use axum::Router;
@@ -24,7 +26,7 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
     logging::log!("listening on http://{}", &addr);
-    axum::serve(listener, app.into_make_service())
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .unwrap();
 }

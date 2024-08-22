@@ -132,10 +132,15 @@ pub async fn process_questions(
 ) -> Result<(), ServerFnError> {
     use crate::app::ssr::*;
     use http::{header, HeaderValue};
-    println!("AAA");
+    use axum::extract::ConnectInfo;
+    use leptos_axum::*;
+    use std::net::SocketAddr;
+
     if let Err(_) = verify_code(code).await {
         return Err(ServerFnError::new("Bad code"));
     }
+
+    let ConnectInfo(addr) = extract::<ConnectInfo<SocketAddr>>().await?;
 
     let response = expect_context::<leptos_axum::ResponseOptions>();
     let conn = &mut db().await.unwrap();
@@ -163,7 +168,6 @@ pub async fn process_questions(
     let participant =
         Participant::from_form(id, participant, abuse_value, shortage_value, abuse_other);
 
-    loop {
         let conn = &mut db().await.unwrap();
         id = sqlx::query("SELECT COUNT(*) from participantes;")
             .fetch_one(conn)
@@ -173,11 +177,13 @@ pub async fn process_questions(
 
         let conn = &mut db().await.unwrap();
 
-        if let Ok(_) = sqlx::query(
-            "INSERT INTO participantes VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
-                    $10, $11, $12, $13, $14, $15, $16)",
+        let id = sqlx::query(
+            "INSERT INTO participantes (age, sex, major, alcohol, alcohol_frequency,
+                drugs, drugs_frequency, disorder, injury, injury_treated, injury_location,
+                abuse, abuse_other, shortage, loss, ip_addr)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
+                $10, $11, $12, $13, $14, $15, $16) RETURNING id",
         )
-        .bind(id)
         .bind(participant.age)
         .bind(participant.sex)
         .bind(&participant.major)
@@ -193,14 +199,11 @@ pub async fn process_questions(
         .bind(&participant.abuse_other)
         .bind(participant.shortage)
         .bind(participant.loss)
-        .execute(conn)
-        .await
-        {
-            break;
-        }
-    }
+        .bind(addr.ip().to_string())
+        .fetch_one(conn)
+        .await?;
 
-    let id_cookie = cookie::Cookie::new("p_id", id.to_string());
+    let id_cookie = cookie::Cookie::new("p_id", id.get::<i32, usize>(0).to_string());
     response.insert_header(
         header::SET_COOKIE,
         HeaderValue::from_str(&id_cookie.to_string()).unwrap(),
@@ -212,10 +215,8 @@ pub async fn process_questions(
 #[server(VerifyCode)]
 pub async fn verify_code(code: String) -> Result<(), ServerFnError> {
     if code == CODE {
-        println!("Code OK :)");
         return Ok(());
     } else {
-        println!("Code Not OK :(");
         return Err(ServerFnError::new(""));
     }
 }

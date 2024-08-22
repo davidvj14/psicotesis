@@ -4,96 +4,85 @@ body {
     margin: 0;
     padding: 0;
 }
-
 .container {
-    max-width: 70vw;
+    max-width: 50%;
     margin: 0 auto;
-    padding: 20px;
+    padding: 1.39vw;
     background-color: #f0f0f0;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 0.69vw;
+    box-shadow: 0 0 0.69vw rgba(0, 0, 0, 0.1);
 }
-
 h1 {
     color: #333;
     background-color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 1.39vw;
+    border-radius: 0.69vw;
+    box-shadow: 0 0 0.69vw rgba(0, 0, 0, 0.1);
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 2.08vw;
 }
-
 h3 {
     color: #333;
     background-color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 1.39vw;
+    border-radius: 0.69vw;
+    box-shadow: 0 0 0.69vw rgba(0, 0, 0, 0.1);
     text-align: center;
 }
-
 .question {
     background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    margin-bottom: 15px;
+    border-radius: 0.69vw;
+    box-shadow: 0 0.28vw 0.42vw rgba(0, 0, 0, 0.1);
+    padding: 0.75vw;
+    margin-bottom: 0.5vw;
+    margin-top: 0.5vw;
 }
-
 form {
-    margin-bottom: 30px;
+    margin-bottom: 1vw;
 }
-
 label {
     font-weight: bold;
     color: #555;
 }
-
 small {
     display: block;
     color: #777;
-    font-size: 0.8em;
-    margin-top: 5px;
+    font-size: 0.75em;
+    margin-top: 0.35vw;
 }
-
 input[type="text"],
 input[type="number"],
 select {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    padding: 0.5vw;
+    margin-top: 0.5vw;
+    border: 0.07vw solid #ccc;
+    border-radius: 0.35vw;
     box-sizing: border-box;
 }
-
 input[type="submit"] {
     width: 100%;
-    padding: 10px;
+    padding: 0.69vw;
+    margin-top: 0.5vw;
     background-color: #007bff;
     color: #fff;
     border: none;
-    border-radius: 5px;
+    border-radius: 0.35vw;
     cursor: pointer;
 }
-
 input[type="submit"]:hover {
     background-color: #0056b3;
 }
-
 .logo {
     display: block;
     margin: 0 auto;
-    max-width: 100px;
+    max-width: 6.94vw;
 }
-
 .fade-in-1000 { animation: fadeIn 1s; }
 @keyframes fadeIn {
     0% { opacity: 0; }
     100% { opacity: 1; }
 }
-
 .fade-out-1000 { animation: fadeOut 1s; }
 @keyframes fadeOut {
     0% { opacity: 1; }

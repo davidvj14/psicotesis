@@ -29,17 +29,16 @@ RUN apt-get update -y \
   && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/psicotesis /app/
-
 COPY --from=builder /app/target/site /app/site
-
 COPY --from=builder /app/Cargo.toml /app/
+COPY --from=builder /app/.env /app
 
 # Set any required env variables and
 ENV RUST_LOG="info"
 ENV LEPTOS_SITE_ADDR="0.0.0.0:8080"
 ENV LEPTOS_SITE_ROOT="site"
+ENV DATABASE_URL=
 EXPOSE 8080
 
 # Run the server
-CMD ["/app/psicotesis"]
-
+#CMD ["/app/psicotesis"]

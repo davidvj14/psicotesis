@@ -4,71 +4,51 @@ body {
     margin: 0;
     padding: 0;
 }
-
 .container {
-    max-width: 80%;
+    max-width: 50%;
     margin: 0 auto;
-    padding: 20px;
+    padding: 1vw;
     background-color: #f0f0f0;
-    border-radius: 10px;
+    border-radius: 0.3vw;
+    box-shadow: 0 0 0.3vw rgba(0, 0, 0, 0.1);
 }
-
-h3 {
-    color: #333;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    margin-bottom: 30px;
-}
-
 table {
     width: 100%;
-    border-collapse: collapse;
 }
-
 th, td {
-    padding: 15px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
+    padding: 1.4vw;
+    text-align: center;
+    border-bottom: 0.07vw solid #ddd;
 }
-
 th {
     background-color: #f2f2f2;
 }
-
 .radio-buttons {
     display: flex;
     justify-content: space-around;
 }
-
 input[type="submit"] {
     width: 100%;
-    padding: 10px;
+    padding: 0.69vw;
     background-color: #007bff;
     color: #fff;
     border: none;
-    border-radius: 5px;
+    border-radius: 0.35vw;
     cursor: pointer;
 }
-
 input[type="submit"]:hover {
     background-color: #0056b3;
 }
-
 .logo {
     display: block;
     margin: 0 auto;
-    max-width: 100px;
+    max-width: 6.94vw;
 }
-
 .fade-in-1000 { animation: fadeIn 1s; }
 @keyframes fadeIn {
     0% { opacity: 0; }
     100% { opacity: 1; }
 }
-
 .fade-out-1000 { animation: fadeOut 1s; }
 @keyframes fadeOut {
     0% { opacity: 1; }
