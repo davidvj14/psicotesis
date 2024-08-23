@@ -4,6 +4,7 @@ use crate::error_template::{AppError, ErrorTemplate};
 use crate::questions_components::Questions;
 use crate::barrat_components::{Barrat, DirectBarrat};
 use crate::card_game_components::CardGame;
+use crate::ending_components::Ending;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
@@ -28,7 +29,7 @@ pub enum Stage {
     Barrat,
     CardSorting,
     CardGame,
-    Thanks,
+    Ending,
     Void,
 }
 
@@ -69,6 +70,14 @@ fn Tests() -> impl IntoView {
         >
             <CardGame stage=stage/>
         </AnimatedShow>
+        <AnimatedShow
+            when=MaybeSignal::derive(move || stage.get() == Stage::Ending)
+            show_class = "fade-in-1000"
+            hide_class = "fade-out-1000"
+            hide_delay = Duration::from_millis(0)
+        >
+            <Ending/>
+        </AnimatedShow>
     }
 }
 
@@ -102,6 +111,7 @@ pub fn App() -> impl IntoView {
                     <Route path="cards" view=DirectCardSorting/>
                     <Route path="barrat" view=DirectBarrat/>
                     <Route path="game" view=DirectCardGame/>
+                    <Route path="end" view=Ending/>
                 </Routes>
             </main>
         </Router>

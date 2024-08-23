@@ -30,7 +30,7 @@ headers = "0.4.0"
 serde_json = "1.0.119"
 rand = "0.8.5"
 chrono = "0.4.38"
-web-sys = "0.3.70"
+web-sys = { version = "0.3.70", features = ["HtmlDocument", "Document", "Window"] }
 
 [features]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]

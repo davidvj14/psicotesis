@@ -14,6 +14,7 @@ pub mod questions;
 pub mod questions_components;
 pub mod barrat_extras;
 pub mod extras;
+pub mod ending_components;
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]

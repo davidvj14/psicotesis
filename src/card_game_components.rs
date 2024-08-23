@@ -290,7 +290,7 @@ fn Questions(gs: RwSignal<GameSignals>, stage: RwSignal<Stage>) -> impl IntoView
         <button on:click=move |_| {
             spawn_local(async move {
                 let _ = crate::card_game::process_card_game(gs.get().game_state).await;
-                stage.set(Stage::Thanks);
+                stage.set(Stage::Ending);
             })
         }>
             "Continuar"
