@@ -40,4 +40,4 @@ ENV LEPTOS_SITE_ROOT="site"
 EXPOSE 8080
 
 # Run the server
-#CMD ["/app/psicotesis"]
+CMD ["/app/psicotesis"]

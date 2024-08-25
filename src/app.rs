@@ -20,6 +20,7 @@ pub mod ssr {
 
     pub async fn db() -> Result<PgConnection, ServerFnError> {
         dotenv().ok();
+        println!("{:?}", std::env::var("DATABASE_URL"));
         let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         Ok(PgConnection::connect(&db_url).await?)
     }

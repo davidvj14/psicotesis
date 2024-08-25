@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  psicotesis:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports: 
+      - "2177:8080"
+    environment:
+      - LEPTOS_SITE_ADDR=0.0.0.0:8080
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${DB_NAME}
+      - DB_NAME=${DB_NAME}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13
+    volumes:
+      - /tmp/db:/var/lib/postgresql/data:Z
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+volumes:
+  postgres_data:
+    driver:local

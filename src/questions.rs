@@ -163,8 +163,6 @@ pub async fn process_questions(
     let participant =
         Participant::from_form(participant, abuse_value, shortage_value, abuse_other);
 
-    let conn = &mut db().await.unwrap();
-
     let id = sqlx::query(
         "INSERT INTO participantes (age, sex, major, alcohol, alcohol_frequency,
             drugs, drugs_frequency, disorder, injury, injury_treated, injury_location,
