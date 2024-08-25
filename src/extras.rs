@@ -40,13 +40,11 @@ pub fn read_cookie(name: &str) -> Option<String> {
         .and_then(|d| d.dyn_into::<HtmlDocument>().ok())
         .and_then(|d| d.cookie().ok())
         .and_then(|cookies| {
-            logging::log!("read_cookie cookies {}", cookies);
             cookies
                 .split(';')
                 .find_map(|cookie| {
                     let (key, val) = cookie.trim().split_once('=')?;
                     if key == name {
-                        logging::log!("read_cookie matched {} : {}", key, val);
                         Some(val.to_string())
                     } else {
                         None
@@ -84,7 +82,6 @@ pub async fn add_cookie(key: &'static str, val: String, response: &ResponseOptio
 #[cfg(feature = "hydrate")]
 pub fn get_stage_from_cookie() -> Stage {
     let cookie = read_cookie("stage");
-    logging::log!("setter cookie: {:?}", cookie);
     match cookie.unwrap_or(String::new()).as_str() {
         "barrat" => Stage::Barrat,
         "card_sorting" => Stage::CardSorting,

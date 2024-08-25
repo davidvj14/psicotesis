@@ -186,11 +186,9 @@ impl TestResult {
         let mut result = Self::new();
         let mut previous_err: Option<CardError> = None;
         let mut last4: VecDeque<Answer> = VecDeque::with_capacity(4);
-        logging::log!("{:?}", answers[0].time_taken);
         result.ttf = answers[0].time_taken;
 
         for answer in answers {
-            logging::log!("{:?}", last4);
             result.eval_step(&last4, answer);
             Self::enqueue(&mut last4, answer.clone());
         }

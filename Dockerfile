@@ -37,7 +37,6 @@ COPY --from=builder /app/.env /app
 ENV RUST_LOG="info"
 ENV LEPTOS_SITE_ADDR="0.0.0.0:8080"
 ENV LEPTOS_SITE_ROOT="site"
-ENV DATABASE_URL=
 EXPOSE 8080
 
 # Run the server
