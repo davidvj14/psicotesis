@@ -24,13 +24,14 @@ dotenvy = { version = "0.15.7", optional = true }
 serde = { version = "1.0.203", features = ["derive"] }
 sqlx = { version = "0.7.4", features = ["postgres", "runtime-tokio"], optional = true }
 lazy_static = { version = "1.4.0", optional = true}
-cookie = { version = "0.18.1" }
 axum-extra = { version = "0.9.3", features = ["cookie"], optional = true }
 headers = "0.4.0"
 serde_json = "1.0.119"
 rand = "0.8.5"
 chrono = "0.4.38"
 web-sys = { version = "0.3.70", features = ["HtmlDocument", "Document", "Window"] }
+time = "0.3.36"
+cookie = "0.18.1"
 
 [features]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]

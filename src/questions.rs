@@ -47,7 +47,6 @@ pub struct Participant {
 #[cfg(feature = "ssr")]
 impl Participant {
     pub fn from_form(
-        id: i64,
         form: ParticipantForm,
         abuse: i32,
         shortage: i32,
@@ -59,7 +58,7 @@ impl Participant {
         };
 
         Self {
-            id,
+            id: -1,
             age: form.age,
             sex: form.sex,
             major: form.major,
@@ -131,6 +130,7 @@ pub async fn process_questions(
     code: String,
 ) -> Result<(), ServerFnError> {
     use crate::app::ssr::*;
+    use crate::extras::add_cookie;
     use http::{header, HeaderValue};
     use axum::extract::ConnectInfo;
     use leptos_axum::*;
@@ -144,11 +144,6 @@ pub async fn process_questions(
 
     let response = expect_context::<leptos_axum::ResponseOptions>();
     let conn = &mut db().await.unwrap();
-    let mut id: i64 = sqlx::query("SELECT COUNT(*) from participantes;")
-        .fetch_one(conn)
-        .await
-        .map(|row| row.get(0))
-        .unwrap_or(0);
 
     let abuse_value = match &abuse {
         None => 0,
@@ -166,48 +161,39 @@ pub async fn process_questions(
     };
 
     let participant =
-        Participant::from_form(id, participant, abuse_value, shortage_value, abuse_other);
+        Participant::from_form(participant, abuse_value, shortage_value, abuse_other);
 
-        let conn = &mut db().await.unwrap();
-        id = sqlx::query("SELECT COUNT(*) from participantes;")
-            .fetch_one(conn)
-            .await
-            .map(|row| row.get(0))
-            .unwrap_or(0);
+    let conn = &mut db().await.unwrap();
 
-        let conn = &mut db().await.unwrap();
+    let id = sqlx::query(
+        "INSERT INTO participantes (age, sex, major, alcohol, alcohol_frequency,
+            drugs, drugs_frequency, disorder, injury, injury_treated, injury_location,
+            abuse, abuse_other, shortage, loss, ip_addr)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
+            $10, $11, $12, $13, $14, $15, $16) RETURNING id",
+    )
+    .bind(participant.age)
+    .bind(participant.sex)
+    .bind(&participant.major)
+    .bind(participant.alcohol)
+    .bind(participant.alcohol_frequency)
+    .bind(participant.drugs)
+    .bind(participant.drugs_frequency)
+    .bind(&participant.disorder)
+    .bind(participant.injury)
+    .bind(participant.injury_treated)
+    .bind(&participant.injury_location)
+    .bind(participant.abuse)
+    .bind(&participant.abuse_other)
+    .bind(participant.shortage)
+    .bind(participant.loss)
+    .bind(addr.ip().to_string())
+    .fetch_one(conn)
+    .await?;
 
-        let id = sqlx::query(
-            "INSERT INTO participantes (age, sex, major, alcohol, alcohol_frequency,
-                drugs, drugs_frequency, disorder, injury, injury_treated, injury_location,
-                abuse, abuse_other, shortage, loss, ip_addr)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
-                $10, $11, $12, $13, $14, $15, $16) RETURNING id",
-        )
-        .bind(participant.age)
-        .bind(participant.sex)
-        .bind(&participant.major)
-        .bind(participant.alcohol)
-        .bind(participant.alcohol_frequency)
-        .bind(participant.drugs)
-        .bind(participant.drugs_frequency)
-        .bind(&participant.disorder)
-        .bind(participant.injury)
-        .bind(participant.injury_treated)
-        .bind(&participant.injury_location)
-        .bind(participant.abuse)
-        .bind(&participant.abuse_other)
-        .bind(participant.shortage)
-        .bind(participant.loss)
-        .bind(addr.ip().to_string())
-        .fetch_one(conn)
-        .await?;
 
-    let id_cookie = cookie::Cookie::new("p_id", id.get::<i32, usize>(0).to_string());
-    response.insert_header(
-        header::SET_COOKIE,
-        HeaderValue::from_str(&id_cookie.to_string()).unwrap(),
-    );
+    add_cookie("p_id", id.get::<i32, usize>(0).to_string(), &response).await;
+    add_cookie("stage", String::from("barrat"), &response).await;
 
     Ok(())
 }

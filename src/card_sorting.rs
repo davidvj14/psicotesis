@@ -5,6 +5,7 @@ use leptos::*;
 pub async fn process_card_sorting(result: TestResult) -> Result<(), ServerFnError> {
     use crate::app::ssr::*;
     use crate::extras::get_id_cookie;
+    use leptos_axum::*;
 
     let cookie = get_id_cookie().await?;
 
@@ -21,7 +22,10 @@ pub async fn process_card_sorting(result: TestResult) -> Result<(), ServerFnErro
         .bind(result.tae)
         .bind(result.time)
         .execute(conn)
-        .await;
+        .await?;
+    
+    let response = expect_context::<leptos_axum::ResponseOptions>();
+    crate::extras::add_cookie("stage", String::from("card_game"), &response).await;
 
     Ok(())
 }

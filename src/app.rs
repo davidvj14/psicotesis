@@ -5,9 +5,11 @@ use crate::questions_components::Questions;
 use crate::barrat_components::{Barrat, DirectBarrat};
 use crate::card_game_components::CardGame;
 use crate::ending_components::Ending;
+use crate::extras::get_stage_from_cookie;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
 #[cfg(feature = "ssr")]
@@ -23,7 +25,7 @@ pub mod ssr {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Stage {
     Questions,
     Barrat,
@@ -33,16 +35,20 @@ pub enum Stage {
     Void,
 }
 
+
 #[component]
 fn Tests() -> impl IntoView {
     let stage = create_rw_signal(Stage::Questions);
+    create_effect(move |_| {
+        stage.set(get_stage_from_cookie());
+    });
 
     view! {
         <AnimatedShow
             when=MaybeSignal::derive(move || stage.get() == Stage::Questions)
             show_class = "fade-in-1000"
             hide_class = "fade-out-1000"
-            hide_delay = Duration::from_millis(0)
+            hide_delay = Duration::from_millis(1000)
         >
             <Questions stage=stage/>
         </AnimatedShow>
@@ -50,7 +56,7 @@ fn Tests() -> impl IntoView {
             when=MaybeSignal::derive(move || stage.get() == Stage::Barrat)
             show_class = "fade-in-1000"
             hide_class = "fade-out-1000"
-            hide_delay = Duration::from_millis(0)
+            hide_delay = Duration::from_millis(1000)
         >
             <Barrat stage=stage/>
         </AnimatedShow>
@@ -58,7 +64,7 @@ fn Tests() -> impl IntoView {
             when=MaybeSignal::derive(move || stage.get() == Stage::CardSorting)
             show_class = "fade-in-1000"
             hide_class = "fade-out-1000"
-            hide_delay = Duration::from_millis(0)
+            hide_delay = Duration::from_millis(1000)
         >
             <CardSorting stage=stage/>
         </AnimatedShow>
@@ -66,7 +72,7 @@ fn Tests() -> impl IntoView {
             when=MaybeSignal::derive(move || stage.get() == Stage::CardGame)
             show_class = "fade-in-1000"
             hide_class = "fade-out-1000"
-            hide_delay = Duration::from_millis(0)
+            hide_delay = Duration::from_millis(1000)
         >
             <CardGame stage=stage/>
         </AnimatedShow>
@@ -74,7 +80,7 @@ fn Tests() -> impl IntoView {
             when=MaybeSignal::derive(move || stage.get() == Stage::Ending)
             show_class = "fade-in-1000"
             hide_class = "fade-out-1000"
-            hide_delay = Duration::from_millis(0)
+            hide_delay = Duration::from_millis(1000)
         >
             <Ending/>
         </AnimatedShow>
@@ -115,18 +121,5 @@ pub fn App() -> impl IntoView {
                 </Routes>
             </main>
         </Router>
-    }
-}
-
-/// Renders the home page of your application.
-#[component]
-fn HomePage() -> impl IntoView {
-    // Creates a reactive value to update the button
-    let (count, set_count) = create_signal(0);
-    let on_click = move |_| set_count.update(|count| *count += 1);
-
-    view! {
-        <h1>"Welcome to Leptos!"</h1>
-        <button on:click=on_click>"Click Me: " {count}</button>
     }
 }

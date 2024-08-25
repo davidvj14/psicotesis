@@ -1,4 +1,4 @@
-use leptos::{server, ServerFnError};
+use leptos::{server, ServerFnError, expect_context};
 use serde::{Deserialize, Serialize};
 use crate::barrat_extras::*;
 
@@ -98,6 +98,7 @@ impl<'a> BarrData {
 #[server(ProcessBarrat)]
 pub async fn process_barrat(data: BarrData) -> Result<(), ServerFnError> {
     use crate::app::ssr::*;
+    use leptos_axum::*;
 
     let cookie = crate::extras::get_id_cookie().await?;
     let arr = data.to_array();
@@ -106,14 +107,16 @@ pub async fn process_barrat(data: BarrData) -> Result<(), ServerFnError> {
     let results = ImpulsivityResult::eval(&answers);
     let conn = &mut db().await.unwrap();
 
-    let q = sqlx::query("INSERT INTO barrat VALUES ($1, $2, $3, $4, $5)")
+    let _ = sqlx::query("INSERT INTO barrat VALUES ($1, $2, $3, $4, $5)")
         .bind(cookie)
         .bind(results.cognitive)
         .bind(results.motor)
         .bind(results.unplanned)
         .bind(arr)
         .execute(conn)
-        .await;
-    println!("{q:?}");
+        .await?;
+
+    let response = expect_context::<leptos_axum::ResponseOptions>();
+    crate::extras::add_cookie("stage", String::from("card_sorting"), &response).await;
     Ok(())
 }

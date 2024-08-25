@@ -50,6 +50,7 @@ pub fn CardSorting(stage: RwSignal<Stage>) -> impl IntoView {
     view! {
         <Stylesheet href="card_sorting.css"/>
         <div class="container">
+            <Incorrect incorrect_signal=incorrect_signal/>
             <Show when=move || reading_signal.get()>
                 <Instructions reading_signal=reading_signal times_over=state.get().status timer_signal=timer_signal/>
             </Show>
@@ -61,7 +62,6 @@ pub fn CardSorting(stage: RwSignal<Stage>) -> impl IntoView {
                 <CriteriaCards/>
                 <br/>
                 <div id="card-area">
-                    <Incorrect incorrect_signal=incorrect_signal/>
                     <SortingAreas state=state incorrect_signal=incorrect_signal timer_signal=timer_signal/>
                 </div>
                 <div id="deck-area">
